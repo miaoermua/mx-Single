@@ -94,6 +94,7 @@ npm run build      # 生产构建
 | `docs/COMPATIBILITY.md` | core 版本差异与 API 兼容性 |
 | `docs/EXTRA_FEATURES.md` | 原主题没有、mx 版新增的功能 |
 | `docs/README.md` | 简要使用方法（环境变量、部署、配置） |
+| `docs/single.md` | 主题介绍页（概述、部署、后端 Snippet 配置、配置项说明），面向使用者 |
 | `docs/config.test.yaml` | Snippet 主题配置示例 |
 
 新增「原主题没有」的能力时，同步更新 `docs/EXTRA_FEATURES.md`；改动运行/配置方式时更新 `docs/README.md`。
