@@ -692,6 +692,13 @@ article ul p:first-child{
 }
 
 /* --- 评论内容 */
+.comment-list .comment-content{
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+.comment-list .comment-content a{
+    word-break: break-all;
+}
 .comment-single .comment-reply{
     opacity: 0;
     float: right;

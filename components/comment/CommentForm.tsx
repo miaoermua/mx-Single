@@ -30,10 +30,13 @@ export function CommentForm({
   postId,
   replyTo,
   onCancelReply,
+  onSubmitted,
 }: {
   postId: string
   replyTo: string | null
   onCancelReply: () => void
+  /** 提交成功后通知父级刷新列表 */
+  onSubmitted?: () => void
 }) {
   const [data, setData] = useState<FormData>({ author: '', mail: '', url: '', text: '' })
   const [errors, setErrors] = useState<Partial<FormData>>({})
@@ -77,9 +80,10 @@ export function CommentForm({
       )
       // 回复走 /api/comment/reply，普通评论走 /api/comment（C7）
       const endpoint = replyTo ? '/api/comment/reply' : '/api/comment'
+      // url 为空时不传，避免后端 422（core 要求 url 非空则必须合法）
       const payload = replyTo
-        ? { ...data, id: replyTo, ref: postId }
-        : { ...data, id: postId }
+        ? { author: data.author, mail: data.mail, text: data.text, url: data.url || undefined, id: replyTo, ref: postId }
+        : { author: data.author, mail: data.mail, text: data.text, url: data.url || undefined, id: postId }
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -90,6 +94,7 @@ export function CommentForm({
         setSuccessMsg(result.needAudit ? '你的评论正等待审核' : '评论成功！')
         setData((d) => ({ ...d, text: '' }))
         if (replyTo) onCancelReply()
+        onSubmitted?.()
       } else {
         setSuccessMsg('评论失败，请稍后重试')
       }

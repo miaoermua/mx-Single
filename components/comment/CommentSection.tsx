@@ -33,7 +33,8 @@ export function CommentSection({
 }) {
   const [items, setItems] = useState(initialItems)
   const [page, setPage] = useState(initialPage)
-  const [totalPages] = useState(initialTotalPages)
+  const [totalPages, setTotalPages] = useState(initialTotalPages)
+  const [total, setTotal] = useState(initialTotal)
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [loadingPage, setLoadingPage] = useState(false)
 
@@ -50,15 +51,17 @@ export function CommentSection({
     return () => document.removeEventListener('single:reply', onReply)
   }, [])
 
-  const loadPage = async (p: number) => {
-    if (p === page || loadingPage) return
+  const loadPage = async (p: number, force = false) => {
+    if ((!force && p === page) || loadingPage) return
     setLoadingPage(true)
     try {
       const res = await fetch(`/api/comments?postId=${postId}&page=${p}&size=10`)
       if (res.ok) {
         const data = await res.json()
         setItems(data.items || [])
-        setPage(p)
+        setPage(data.page ?? p)
+        setTotalPages(data.totalPages ?? 1)
+        setTotal(data.total ?? 0)
       }
     } catch {
       // 静默失败
@@ -67,7 +70,10 @@ export function CommentSection({
     }
   }
 
-  const count = initialTotal
+  // 提交成功后回到第 1 页重新拉取，让新评论（无需审核时）立即出现
+  const refreshList = () => loadPage(1, true)
+
+  const count = total
   const heading =
     count === 0 ? '没有评论' : count === 1 ? '只有一条评论 (QwQ)' : `已有 ${count} 条评论`
 
@@ -83,6 +89,7 @@ export function CommentSection({
             postId={postId}
             replyTo={replyTo}
             onCancelReply={() => setReplyTo(null)}
+            onSubmitted={refreshList}
           />
         </div>
       )}

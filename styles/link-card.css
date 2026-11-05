@@ -1,0 +1,100 @@
+/**
+ * LinkCard 链接卡片样式 —— 【额外实现，非 Single 标准】
+ *
+ * kami 扩展能力移植，视觉参考 my-kami link-card.module.css，已做三处适配：
+ * 1. WindiCSS @apply 全部展开为原生 CSS（本工程无 WindiCSS）；
+ * 2. 暗色选择器 html.dark 改为 body.dark-theme（Single 的暗色机制）；
+ * 3. 文字颜色改 inherit 跟随 Single 正文，不引用 kami 的 CSS 变量。
+ *
+ * 独立文件、link-card 前缀类名，不修改 kico.css / single.css（FRONTEND_PLAN 2.3 零 CSS 框架选型）。
+ */
+
+.link-card {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  box-sizing: border-box;
+  width: 390px;
+  max-width: 100%;
+  min-height: 84px;
+  margin: 16px auto;
+  padding: 12px 18px;
+  overflow: hidden;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  background-color: rgba(243, 243, 243, 0.5);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.link-card:hover {
+  text-decoration: none;
+  background-color: rgba(226, 226, 226, 0.65);
+}
+
+body.dark-theme .link-card {
+  background-color: rgba(40, 40, 40, 0.5);
+}
+
+body.dark-theme .link-card:hover {
+  background-color: rgba(64, 64, 64, 0.6);
+}
+
+.link-card-contents {
+  flex: 1 1 auto;
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.link-card-title {
+  color: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+  margin-bottom: 2px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.link-card-desc {
+  color: inherit;
+  opacity: 0.62;
+  font-size: 13px;
+  line-height: 18px;
+  height: 18px;
+  margin-top: 6px;
+  min-width: 0;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.link-card-image {
+  flex-shrink: 0;
+  height: 60px;
+  width: 60px;
+  margin-left: 20px;
+  border-radius: 8px;
+  background-color: rgba(128, 128, 128, 0.18);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+body.dark-theme .link-card-image {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* 降级卡（预取失败）：弱提示样式，保持可点击 */
+.link-card-fallback .link-card-title {
+  opacity: 0.75;
+}

@@ -258,6 +258,25 @@ text (markdown)
 
 **文本宏 `[[ ]]`** 在服务端替换（`textOptions.macros`）。若前端自渲染，需二选一：调用 `GET /api/vN/markdown/render/structure/:id` 拿后端渲染结果（会引入其固定 CDN 脚本与主题 CSS，**不推荐**，可能破坏 P0），或在管线里做同样的宏替换。
 
+### 7.1 链接卡片 LinkCard（**额外实现，非 Single 标准**，2026-11-05 已落地）
+
+> kami 扩展能力移植：原 Single（Typecho 主题）正文内链接就是普通 `<a>`，没有卡片能力。以下全部为新增实现，与 P0 视觉基线无关。
+
+**语法（与 kami KamiMarkdown 对齐）**：`[^N]: URL` 定义卡片，`[^N]` 在正文引用处渲染卡片。自动识别两种：`notes/{nid}`、`posts/{分类}/{slug}` 走 self；其他 http/https 走 external。gh 源不自动识别，仅支持 `<LinkCard id="owner/repo" source="gh" />` 手动组件用法（与 kami 一致）。代码围栏内的定义与引用不处理。
+
+**实现（SSR 直出，与第 2.1 节纯 SSR 架构一致）**：
+
+| 文件 | 职责 |
+| --- | --- |
+| `lib/link-cards.ts` | `extractFootnoteCards`（定义抽取 + 引用替换为占位注释）+ `resolveLinkCards`（self→core API、gh→GitHub API、external→`fetchLinkMetadata`，并发 + 6s 超时，单卡失败返回 null 降级） |
+| `lib/link-preview.ts` | 外链 og metadata 抓取（平移 kami `pages/api/link-preview.tsx`：5s 超时 + SSRF 防护），供 SSR 预取与 API 路由共用 |
+| `app/api/link-preview/route.ts` | `GET /api/link-preview?url=` 薄封装（App Router route handler，nodejs runtime） |
+| `lib/markdown.ts` | `renderMarkdownSegments`：占位注释经 marked html block 透传后 split 成 `html/card` 分段数组；无卡片时单段输出，行为与 `renderMarkdown` 完全一致（TOC/Prism/Lightbox 均不受影响） |
+| `components/content/LinkCard.tsx` | 展示组件，props 对齐 kami `LinkCardProps` + `data`（SSR 预取结果）；`data` 为 null 时降级为朴素链接卡（可点击、无图） |
+| `styles/link-card.css` | 卡片样式（`link-card` 前缀类名）。kami 版 WindiCSS `@apply` 已展开为原生 CSS，暗色选择器 `html.dark` 已改 `body.dark-theme`。**独立文件，未修改 kico.css / single.css**，符合 2.3「零 CSS Modules」选型 |
+
+**与 kami 的差异**：kami 在客户端进入视口后才 fetch（懒加载 + 骨架屏）；本工程 SSR 阶段预取完毕直出，无客户端 JS、SEO 完整，外链抓取失败的卡片降级为朴素链接卡不阻塞整页。接入点为 post 详情页 `app/posts/[category]/[slug]/page.tsx`（正文分段渲染）。
+
 ---
 
 ## 8. 评论实现要点

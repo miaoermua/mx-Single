@@ -8,11 +8,15 @@
 - 评论
 - 日记
 - 友链
-
+- Markdown 扩展，LinkCard
 
 不要用于生产环境，目前来说只是个玩具，并没有明确完善他。
 
-目前基于 12.x API v2 进行开发
+> [!IMPORTANT]
+> - **mx-Single 是 [Single](https://github.com/Dreamer-Paul/Single) 的社区分支**，请勿向原作者 (@Dreamer-Paul) 报告本项目的 Issue。
+>
+> - **版本要求**：目前 Single **仅支持 Mix Space Core 版本 == 12.x (API v2)**。
+
 
 [文档](./docs/)
 
