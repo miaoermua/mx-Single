@@ -1,0 +1,82 @@
+# Single 主题配置（mx Snippet）—— 逐项对应 Single/functions.php themeConfig() 的 11 项
+#
+# 用途：mx 后台 → 其他 · 配置与云函数 → 新建
+#   名字: single | 引用: theme | 数据类型: YAML | 公开: 是
+# 验证：GET /api/v2/aggregate?theme=single → 响应 .theme 即本文件解析结果
+#
+# 原则：字段名、取值、默认语义全部沿用 Single 原配置（radio '0'/'1'/'2'、
+# checkbox show_*、「不填则不输出/不填则用默认」），不引入 kami 的 site.* 结构。
+# 仅末尾 wallpaper、nav_extra 两项是 mx 新增（FRONTEND_PLAN.md 5.3 / 10.2）。
+
+name: single
+
+# 1 站点图标（functions.php:11）—— png 地址 192×192，不填则使用默认图标
+favicon:
+
+# 2 站点背景（functions.php:15）—— 一张图片地址，不填则显示纯色背景。
+#    填壁纸 API 即随机背景（线上 paugram 同款用法）。
+background: https://api.paugram.com/wallpaper?source=gt
+
+# 3 自定义社交链接（functions.php:19）—— 不填则不输出。
+#    原为手写 HTML（进首页 .home-social）；mx 版结构化，组件输出同款 DOM：
+#    <a href="url"><i class="fa fa-{icon}"></i></a>；svg 有值时优先输出内联 SVG。
+home_social:
+  - title: GitHub
+    url: https://github.com/Dreamer-Paul
+    icon: fa-github
+  - title: Bilibili
+    url: https://space.bilibili.com/
+    icon: fa-tv
+    svg: ''
+
+# 4 自定义样式表（functions.php:23）—— 不填则不输出，顺序在 single.css 之后。
+custom_css: |-
+  body::before{mix-blend-mode:multiply}
+  .dark-theme::before{opacity:.4}
+
+# 5 统计代码（functions.php:27）—— 不填则不输出，需要 <script> 标签，原样输出
+custom_script: ''
+
+# 6 作者信息（functions.php:31）—— 显示在文章底部 .author-info，不填则不输出
+author_text: ''
+
+# 7 夜间模式（functions.php:35）—— '0' 关闭 | '1' 开启（22:00-5:00 自动）| '2' 始终
+night_mode: '0'
+
+# 8 复制提示（functions.php:45）—— '0' 关闭 | '1' 开启（访客复制内容时弹窗）
+copy_notice: '1'
+
+# 9 信息栏（functions.php:54）—— '0' 关闭 | '1' 开启（页尾"最新文章/最近评论/时光机"三栏）
+widget_set: '1'
+
+# 10 首页、存档页属性显示（functions.php:63）—— 多选
+#     show_category 文章分类 | show_tags 文章标签 | show_comments 评论数
+archive_meta:
+  - show_category
+  - show_comments
+
+# 11 文章页属性显示（functions.php:73）—— 多选，原配置无 show_tags
+#     show_category 文章分类 | show_comments 评论数
+post_meta:
+  - show_category
+  - show_comments
+
+# ---- 以下为 mx 新增（原 PHP 无对应项）----
+
+# 随机背景增强（FRONTEND_PLAN 10.2）—— background 填壁纸 API 时的健壮化配置
+wallpaper:
+  enabled: true
+  source: api              # api = paugram API | cdn = 仓库直取 | static = 固定图
+  fallback: cdn            # api 加载失败回退
+  cdnList:
+    - https://cdn.jsdelivr.net/gh/Dreamer-Paul/Anime-Wallpaper@master/{n}.jpg
+  range: [1, 120]          # 随机 {n} 的范围
+  static_url: ''           # source: static 时的固定图
+
+# mx 新页面的导航开关（FRONTEND_PLAN 5.3 nav_extra）
+nav_extra:
+  archive: true            # 归档
+  notes: true              # 日记
+  says: true               # 说说
+  timeline: true           # 时间轴
+  friends: true            # 友链

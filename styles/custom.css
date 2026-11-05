@@ -1,0 +1,101 @@
+/* Single 主题 × mx 前端：自定义页面样式
+ *
+ * 从线上 paugram.com 友链页 / 归档页的内联 <style> 提取，
+ * 对应 FRONTEND_PLAN.md 第 4 节 DOM 契约表里的 .link-friend / .archives-head / .archives-list。
+ * 这些规则原本是作者在每个自定义页面模板里手写的，这里统一收口，避免页面内重复内联。
+ */
+
+/* --- 友链卡片（/friends） --- */
+.link-friend {
+    display: block;
+    position: relative;
+    text-align: center;
+    background: var(--light-bg, #f5f5f5);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform .3s;
+}
+.link-friend img {
+    width: 64px;
+    height: 64px;
+    border-radius: 100%;
+    margin: 1.5em auto -1.5em;
+    border: 3px solid #fff;
+    transition: transform .3s;
+}
+.link-friend h4 {
+    margin: 2em 0 0;
+    padding: 0 1em;
+}
+.link-friend p {
+    margin: .5em 0 1.5em;
+    padding: 0 1em;
+    color: #888;
+    font-size: .9em;
+}
+.link-friend:hover {
+    transform: translateY(-4px);
+}
+.link-friend:hover img {
+    transform: rotate(1turn);
+}
+
+/* --- 归档页（/archive） --- */
+.archives-head {
+    margin: 1em 0 2em;
+    text-align: center;
+}
+.archives-head a {
+    display: inline-block;
+    margin: .25em;
+    padding: .25em .8em;
+    border-radius: 2em;
+    background: var(--light-bg, #f5f5f5);
+    font-size: .9em;
+    transition: background .3s, color .3s;
+}
+.archives-head a:hover {
+    background: var(--blue, #3498db);
+    color: #fff;
+}
+
+.archives-list {
+    list-style: none;
+    padding: 0;
+}
+.archives-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .5em 0;
+    border-bottom: 1px dashed var(--light-bg, #eee);
+}
+.archives-list li:last-child {
+    border-bottom: none;
+}
+.archives-list li a {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.archives-list li .date {
+    margin-left: 1em;
+    flex-shrink: 0;
+    color: #888;
+    font-size: .85em;
+}
+
+/* --- 夜间模式覆写 --- */
+body.dark-theme .link-friend {
+    background: var(--dark-bg, #2c2c2c);
+}
+body.dark-theme .link-friend img {
+    border-color: var(--dark-bg, #2c2c2c);
+}
+body.dark-theme .archives-head a {
+    background: var(--dark-bg, #2c2c2c);
+}
+body.dark-theme .archives-list li {
+    border-color: var(--dark-bg, #3c3c3c);
+}

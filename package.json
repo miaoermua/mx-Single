@@ -1,0 +1,30 @@
+{
+  "name": "single-mx-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Single 主题 × Mix Space 前端适配（FRONTEND_PLAN.md 方案 A）",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mx-space/api-client": "4.4.0",
+    "marked": "^12.0.0",
+    "next": "^14.2.33",
+    "prismjs": "1.21.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/prismjs": "1.26.0",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.33",
+    "typescript": "^5.4.0"
+  }
+}

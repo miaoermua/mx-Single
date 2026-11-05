@@ -1,0 +1,10 @@
+/* Next.js App Router 全局样式入口
+ *
+ * 不引任何 CSS 框架（FRONTEND_PLAN 方案 A）。
+ * 视觉基线由 styles/kico.css → styles/single.css → Font Awesome → custom 顺序加载，
+ * 在 app/layout.tsx 里按此顺序 import。
+ *
+ * 这里只放 Next.js 必需的最小全局规则。
+ */
+
+/* kico.css / single.css 都已定义 body 样式，这里不重复 */
