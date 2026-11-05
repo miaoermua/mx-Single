@@ -134,8 +134,8 @@ export const mockComments: Comment[] = [
 ]
 
 export const mockFriends: FriendLink[] = [
-  { id: 'f1', name: 'Dreamer Paul', url: 'https://paugram.com', avatar: 'https://avatars.githubusercontent.com/u/26398357?v=4', description: 'Single 主题作者', type: '我的朋友们' },
-  { id: 'f2', name: 'Example Blog', url: 'https://example.com', avatar: '', description: '一个示例博客', type: '博客导航' },
+  { id: 'f1', name: 'Dreamer Paul', url: 'https://paugram.com', avatar: 'https://avatars.githubusercontent.com/u/26398357?v=4', description: 'Single 主题作者', type: 0, state: 0 },
+  { id: 'f2', name: 'Example Blog', url: 'https://example.com', avatar: '', description: '一个示例博客', type: 1, state: 0 },
 ]
 
 import type { Note, Recently, Say } from './adapter'

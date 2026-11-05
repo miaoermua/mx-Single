@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { extractHeadings, firstLevel, type TocHeading } from '@/lib/markdown'
+import { extractHeadings, firstLevel, type TocHeading } from '@/lib/toc'
 
 /**
  * 目录树（single.js:48-106 → ArticleTree）

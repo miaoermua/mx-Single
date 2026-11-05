@@ -11,6 +11,12 @@
 
 import { marked } from 'marked'
 import { extractFootnoteCards, type LinkCardRef } from './link-cards'
+import { extractHeadings, firstLevel, type TocHeading } from './toc'
+
+// TOC 纯函数已拆到 ./toc（客户端 ArticleTree 直接用，避免把本模块的
+// marked / link-preview 链打进浏览器）。这里 re-export 保持既有引用可用。
+export { extractHeadings, firstLevel }
+export type { TocHeading }
 
 marked.setOptions({
   breaks: false,
@@ -65,49 +71,6 @@ export function renderMarkdown(text: string): string {
 
   const html = marked.parse(text, { renderer } as Parameters<typeof marked.parse>[1])
   return typeof html === 'string' ? html : ''
-}
-
-export interface TocHeading {
-  level: number
-  id: string
-  text: string
-}
-
-/**
- * 从 Markdown 提取标题列表，生成 TOC（FRONTEND_PLAN 第 7 节）。
- * 生成规则照抄 single.js:48-106：统计各级标题数得出 firstLevel。
- */
-export function extractHeadings(text: string): TocHeading[] {
-  const lines = text.split('\n')
-  const headings: TocHeading[] = []
-  let idx = 0
-  let inCodeBlock = false
-  for (const line of lines) {
-    // 跳过代码围栏内的内容
-    if (/^```/.test(line.trim())) {
-      inCodeBlock = !inCodeBlock
-      continue
-    }
-    if (inCodeBlock) continue
-    const m = /^(#{1,6})\s+(.+)$/.exec(line)
-    if (m) {
-      idx += 1
-      headings.push({
-        level: m[1].length,
-        id: `title-${idx}`,
-        text: m[2].trim(),
-      })
-    }
-  }
-  return headings
-}
-
-/**
- * 计算 TOC 的 firstLevel（最小标题级别），用于 level = tagLevel - firstLevel + 1。
- */
-export function firstLevel(headings: TocHeading[]): number {
-  if (!headings.length) return 1
-  return Math.min(...headings.map((h) => h.level))
 }
 
 /* ---------- 链接卡片分段渲染 —— 【额外实现，非 Single 标准】 ---------- */
