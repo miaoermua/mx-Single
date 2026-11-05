@@ -90,7 +90,7 @@ export default async function HomePage({
                 )}
                 {meta.show_comments && (
                   <span className="comments">
-                    {post.count?.comments ?? 0} °C
+                    {post.count?.read ?? 0} °C
                   </span>
                 )}
               </div>
