@@ -234,3 +234,91 @@ export function adaptFriend(raw: AnyObj): FriendLink {
     state: p.state as number | undefined,
   }
 }
+
+/* ---------- 日记 Note（M3） ---------- */
+
+export interface Note {
+  id: string
+  nid: number
+  title?: string
+  content: string
+  created: string
+  mood?: string
+  weather?: string
+  bookmark?: { title: string; url: string }[]
+  hide?: boolean
+  password?: boolean
+}
+
+export function adaptNote(raw: AnyObj): Note {
+  const p = camelKeys<AnyObj>(raw)
+  return {
+    id: String(p.id ?? p._id ?? ''),
+    nid: Number(p.nid ?? 0),
+    title: p.title as string | undefined,
+    content: String(p.content ?? ''),
+    created: String(p.created ?? ''),
+    mood: p.mood as string | undefined,
+    weather: p.weather as string | undefined,
+    bookmark: p.bookmark as Note['bookmark'],
+    hide: p.hide as boolean | undefined,
+    password: p.password as boolean | undefined,
+  }
+}
+
+/* ---------- 说说 Say（M4） ---------- */
+
+export interface Say {
+  id: string
+  content: string
+  created: string
+}
+
+export function adaptSay(raw: AnyObj): Say {
+  const p = camelKeys<AnyObj>(raw)
+  return {
+    id: String(p.id ?? p._id ?? ''),
+    content: String(p.content ?? ''),
+    created: String(p.created ?? ''),
+  }
+}
+
+/* ---------- 动态 Recently（M4） ---------- */
+
+export interface Recently {
+  id: string
+  content: string
+  created: string
+}
+
+export function adaptRecently(raw: AnyObj): Recently {
+  const p = camelKeys<AnyObj>(raw)
+  return {
+    id: String(p.id ?? p._id ?? ''),
+    content: String(p.content ?? ''),
+    created: String(p.created ?? ''),
+  }
+}
+
+/* ---------- 时间轴 Timeline（M2/M5） ---------- */
+
+export interface TimelineItem {
+  id: string
+  title: string
+  slug: string
+  category?: string
+  created: string
+  type?: string
+}
+
+export function adaptTimeline(raw: AnyObj): TimelineItem {
+  const p = camelKeys<AnyObj>(raw)
+  return {
+    id: String(p.id ?? p._id ?? ''),
+    title: String(p.title ?? ''),
+    slug: String(p.slug ?? ''),
+    category: (p.category as AnyObj)?.name as string | undefined,
+    created: String(p.created ?? ''),
+    type: p.type as string | undefined,
+  }
+}

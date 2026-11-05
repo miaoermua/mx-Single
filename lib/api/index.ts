@@ -12,20 +12,28 @@ import {
   adaptCategory,
   adaptComment,
   adaptFriend,
+  adaptNote,
   adaptPage,
   adaptPost,
   adaptPostDetail,
+  adaptRecently,
+  adaptSay,
+  adaptTimeline,
   camelKeys,
   parsePagination,
   unwrap,
   type Comment,
   type Category,
   type FriendLink,
+  type Note,
   type PageDetail,
   type PostDetail,
   type PostSummary,
+  type Recently,
+  type Say,
+  type TimelineItem,
 } from './adapter'
-import { mockAggregate, mockPosts, mockPostDetail, mockPage, mockComments, mockFriends, mockCategories } from './mock'
+import { mockAggregate, mockPosts, mockPostDetail, mockPage, mockComments, mockFriends, mockCategories, mockNote, mockSays, mockRecently } from './mock'
 
 /** SSR fetch 专用 headers */
 function ssrHeaders(): HeadersInit {
@@ -157,4 +165,135 @@ export async function fetchFriends(): Promise<FriendLink[]> {
   return unwrap<Record<string, unknown>[]>(raw).map(adaptFriend)
 }
 
+/* ---------- 日记 Note（M3） ---------- */
+
+export async function fetchNote(nid: string): Promise<Note | null> {
+  if (!hasCore()) {
+    return mockNote
+  }
+  const raw = await get<Record<string, unknown>>(`/notes/nid/${nid}`)
+  if (!raw) return null
+  return adaptNote(raw)
+}
+
+export async function fetchNotes(size = 10): Promise<Note[]> {
+  if (!hasCore()) return [mockNote]
+  const raw = await get<unknown>(`/notes?size=${size}`)
+  return unwrap<Record<string, unknown>[]>(raw).map(adaptNote)
+}
+
+/* ---------- 说说 Say（M4） ---------- */
+
+export async function fetchSays(size = 10): Promise<Say[]> {
+  if (!hasCore()) return mockSays
+  const raw = await get<unknown>(`/says?size=${size}`)
+  return unwrap<Record<string, unknown>[]>(raw).map(adaptSay)
+}
+
+/* ---------- 动态 Recently（M4） ---------- */
+
+export async function fetchRecently(size = 10): Promise<Recently[]> {
+  if (!hasCore()) return mockRecently
+  const raw = await get<unknown>(`/recently?size=${size}`)
+  return unwrap<Record<string, unknown>[]>(raw).map(adaptRecently)
+}
+
+/* ---------- 时间轴 Timeline（M2/M5） ---------- */
+
+export async function fetchTimeline(type = 'post'): Promise<TimelineItem[]> {
+  if (!hasCore()) {
+    return mockPosts.map((p) => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      category: p.category,
+      created: p.created,
+      type: 'post',
+    }))
+  }
+  const raw = await get<unknown>(`/aggregate/timeline?type=${type}`)
+  return unwrap<Record<string, unknown>[]>(raw).map(adaptTimeline)
+}
+
+/* ---------- 上下篇（A8：core 文章详情不含 prev/next，前端按 created 查相邻） ---------- */
+
+export async function fetchAdjacentPosts(
+  currentId: string,
+  created: string,
+  categorySlug?: string,
+): Promise<{ prev: PostSummary | null; next: PostSummary | null }> {
+  if (!hasCore()) {
+    // mock：用列表里的顺序模拟
+    const all = mockPosts
+    const idx = all.findIndex((p) => p.id === currentId)
+    return {
+      prev: idx > 0 ? all[idx - 1] : null,
+      next: idx >= 0 && idx < all.length - 1 ? all[idx + 1] : null,
+    }
+  }
+  // 取同分类/全局列表，按 created 找相邻
+  const path = categorySlug
+    ? `/categories/${categorySlug}/posts?size=50`
+    : `/posts?size=50`
+  const raw = await get<unknown>(path)
+  const items = unwrap<Record<string, unknown>[]>(raw).map(adaptPost)
+  const sorted = items.sort(
+    (a, b) => new Date(a.created).getTime() - new Date(b.created).getTime(),
+  )
+  const idx = sorted.findIndex((p) => p.id === currentId)
+  if (idx === -1) {
+    return { prev: null, next: null }
+  }
+  return {
+    prev: idx > 0 ? sorted[idx - 1] : null,
+    next: idx < sorted.length - 1 ? sorted[idx + 1] : null,
+  }
+}
+
+/* ---------- 最近文章 / 最近评论（页脚 widget） ---------- */
+
+export async function fetchRecentPosts(size = 6): Promise<PostSummary[]> {
+  if (!hasCore()) return mockPosts.slice(0, size)
+  const raw = await get<unknown>(`/posts?size=${size}&sortBy=created`)
+  return unwrap<Record<string, unknown>[]>(raw).map(adaptPost)
+}
+
+export interface RecentComment {
+  author: string
+  content: string
+  link?: string
+}
+
+export async function fetchRecentComments(): Promise<RecentComment[]> {
+  if (!hasCore()) {
+    return mockComments.slice(0, 3).map((c) => ({
+      author: c.author,
+      content: c.content,
+    }))
+  }
+  // /activity/recent 只返回 3 条评论（R8），接受
+  const raw = await get<unknown>('/activity/recent')
+  const arr = unwrap<Record<string, unknown>[]>(raw)
+  return arr.map((c) => {
+    const p = camelKeys<Record<string, unknown>>(c)
+    return {
+      author: String(p.author ?? ''),
+      content: String(p.content ?? ''),
+      link: p.link as string | undefined,
+    }
+  })
+}
+
 export { hasCore, MX_CORE_URL }
+export type {
+  Comment,
+  Category,
+  FriendLink,
+  Note,
+  PageDetail,
+  PostDetail,
+  PostSummary,
+  Recently,
+  Say,
+  TimelineItem,
+} from './adapter'

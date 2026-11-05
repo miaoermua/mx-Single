@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import type { AggregateData } from '@/lib/api'
+import type { AggregateData, PostSummary, RecentComment } from '@/lib/api'
+import { fetchRecentPosts, fetchRecentComments } from '@/lib/api'
 import type { SingleThemeConfig } from '@/lib/theme-config'
 
 /**
@@ -10,7 +11,7 @@ import type { SingleThemeConfig } from '@/lib/theme-config'
  * .wrap.min > section.widget > .row > .col-m-4*3（h3.title-recent/.title-date/.title-comments + ul>li）；
  * section.sub-footer > p
  */
-export function Footer({
+export async function Footer({
   aggregate,
   theme,
 }: {
@@ -20,6 +21,16 @@ export function Footer({
   const siteName = aggregate.seo?.title || 'Single'
   const siteUrl = aggregate.url?.siteUrl || '/'
   const widgetSet = theme.widget_set === '1'
+
+  let recentPosts: PostSummary[] = []
+  let recentComments: RecentComment[] = []
+  if (widgetSet) {
+    // 并行获取最新文章与最近评论；时光机按月分组需 /aggregate/timeline（S5）
+    ;[recentPosts, recentComments] = await Promise.all([
+      fetchRecentPosts(6),
+      fetchRecentComments(),
+    ])
+  }
 
   return (
     <footer>
@@ -33,18 +44,45 @@ export function Footer({
             <div className="row">
               <div className="col-m-4">
                 <h3 className="title-recent">最新文章：</h3>
-                {/* S2 阶段接 /posts 列表；S1 骨架先留空 */}
-                <ul />
+                <ul>
+                  {recentPosts.map((p) => (
+                    <li key={p.id}>
+                      <Link
+                        href={`/posts/${p.categorySlug || 'uncategorized'}/${p.slug}`}
+                        target="_blank"
+                      >
+                        {p.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
               <div className="col-m-4">
                 <h3 className="title-date">时光机：</h3>
-                {/* S5 阶段接 /aggregate/timeline 按月分组 */}
-                <ul />
+                {/* core 无按月归档资源（X4），用文章列表按月分组 */}
+                <ul>
+                  {groupByMonth(recentPosts).map((g) => (
+                    <li key={g.label}>
+                      <Link href={`/archive?month=${g.key}`} rel="nofollow" target="_blank">
+                        {g.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
               <div className="col-m-4">
                 <h3 className="title-comments">最近评论：</h3>
-                {/* S5 阶段接 /activity/recent（注意只返回 3 条，R8） */}
-                <ul />
+                <ul>
+                  {recentComments.map((c, i) => (
+                    <li key={i}>
+                      {c.author}:{' '}
+                      <a href={c.link || '#'} rel="nofollow" target="_blank">
+                        {c.content.slice(0, 10)}
+                        {c.content.length > 10 ? '...' : ''}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </section>
@@ -66,4 +104,16 @@ export function Footer({
       </div>
     </footer>
   )
+}
+
+/** 把文章列表按月分组（A16 时光机） */
+function groupByMonth(posts: PostSummary[]): Array<{ key: string; label: string }> {
+  const map = new Map<string, string>()
+  for (const p of posts) {
+    const d = new Date(p.created)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const label = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月`
+    if (!map.has(key)) map.set(key, label)
+  }
+  return Array.from(map.entries()).map(([key, label]) => ({ key, label }))
 }

@@ -117,10 +117,37 @@ export function SingleRuntime({
     return () => document.removeEventListener('copy', showNotice)
   }, [pathname, copyNotice])
 
-  // 7. Prism 高亮（S3 阶段细化；先保证路由变更后重跑）
+  // 7. Prism 高亮（路由变更后重跑）
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).Prism) {
       ;(window as any).Prism.highlightAll()
+    }
+  }, [pathname])
+
+  // 8. 评论 @ 引用高亮（:121-133）：hover .comment-single.active 放大 1.05
+  useEffect(() => {
+    const links = document.querySelectorAll<HTMLElement>(
+      '.comment-content [href^="#comment"]',
+    )
+    if (!links.length) return
+
+    const handlers: Array<{ el: HTMLElement; enter: () => void; leave: () => void }> = []
+    links.forEach((link) => {
+      const href = link.getAttribute('href')
+      if (!href) return
+      const target = document.querySelector(href)
+      if (!target) return
+      const enter = () => target.classList.add('active')
+      const leave = () => target.classList.remove('active')
+      link.addEventListener('mouseenter', enter)
+      link.addEventListener('mouseleave', leave)
+      handlers.push({ el: link, enter, leave })
+    })
+    return () => {
+      handlers.forEach(({ el, enter, leave }) => {
+        el.removeEventListener('mouseenter', enter)
+        el.removeEventListener('mouseleave', leave)
+      })
     }
   }, [pathname])
 

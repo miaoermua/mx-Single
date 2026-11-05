@@ -137,3 +137,26 @@ export const mockFriends: FriendLink[] = [
   { id: 'f1', name: 'Dreamer Paul', url: 'https://paugram.com', avatar: 'https://avatars.githubusercontent.com/u/26398357?v=4', description: 'Single 主题作者', type: '我的朋友们' },
   { id: 'f2', name: 'Example Blog', url: 'https://example.com', avatar: '', description: '一个示例博客', type: '博客导航' },
 ]
+
+import type { Note, Recently, Say } from './adapter'
+
+export const mockNote: Note = {
+  id: 'n1',
+  nid: 1,
+  title: '今天写了不少代码',
+  content: '把 Single 主题的前端骨架搭起来了，接下来要接 mx 数据层。\n\n感觉还不错。',
+  created: '2026-11-05T12:00:00.000Z',
+  mood: '开心',
+  weather: '晴',
+}
+
+export const mockSays: Say[] = [
+  { id: 's1', content: '前端骨架终于跑通了！', created: '2026-11-05T11:00:00.000Z' },
+  { id: 's2', content: 'Next.js App Router 真香。', created: '2026-11-04T18:00:00.000Z' },
+  { id: 's3', content: '样式逐字节复用，零框架。', created: '2026-11-03T09:00:00.000Z' },
+]
+
+export const mockRecently: Recently[] = [
+  { id: 'r1', content: '更新了文章《用 Next.js 重写博客前端》', created: '2026-10-20T08:30:00.000Z' },
+  { id: 'r2', content: '提交了 Single 主题 mx 适配的骨架代码', created: '2026-11-05T10:00:00.000Z' },
+]

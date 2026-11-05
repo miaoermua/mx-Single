@@ -1,21 +1,37 @@
+import { fetchNote } from '@/lib/api'
+import { notFound } from 'next/navigation'
+import { renderMarkdown } from '@/lib/markdown'
+
 /**
- * 日记详情（mx 特性 → NotePage）
+ * 日记详情（mx 特性 → NotePage，M3）
  *
- * 复用 post.php 版式。S5 阶段接 /notes/nid/:nid。
+ * 复用 post.php 版式。GET /notes/nid/:nid
  */
 export default async function NotePage({
   params,
 }: {
   params: { nid: string }
 }) {
+  const note = await fetchNote(params.nid)
+  if (!note) notFound()
+
+  const html = renderMarkdown(note.content)
+
   return (
     <main>
       <div className="wrap min">
         <section className="post-title">
-          <h2>日记 #{params.nid}</h2>
+          <h2>{note.title || `日记 #${note.nid}`}</h2>
+          <div className="post-meta">
+            <time className="date">
+              {new Date(note.created).toLocaleDateString('zh-CN')}
+            </time>
+            {note.mood && <span className="category">心情：{note.mood}</span>}
+            {note.weather && <span className="category">天气：{note.weather}</span>}
+          </div>
         </section>
         <article className="post-content">
-          <p>（S5 阶段接 <code>GET /notes/nid/:nid</code>）</p>
+          <div dangerouslySetInnerHTML={{ __html: html }} />
         </article>
       </div>
     </main>

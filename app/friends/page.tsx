@@ -1,10 +1,12 @@
 import { fetchFriends } from '@/lib/api'
+import { ApplyForm } from '@/components/friends/ApplyForm'
 
 /**
  * 友链页（线上完整版 → FriendsPage）
  *
  * DOM 契约：section.page-title + article.page-content.is-special；
  * 分组 h1；.row > .col-6.col-m-4 > a.link-friend > img + h4 + p
+ * 末尾挂自助申请表单（M1/A17：mx 原生 /links/audit 取代评论区留言）
  */
 export default async function FriendsPage() {
   const friends = await fetchFriends()
@@ -48,6 +50,8 @@ export default async function FriendsPage() {
               </div>
             </div>
           ))}
+          {/* 自助申请表单（M1/A17） */}
+          <ApplyForm />
         </article>
       </div>
     </main>

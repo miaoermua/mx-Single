@@ -1,8 +1,12 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { fetchAggregate, fetchPostDetail } from '@/lib/api'
+import type { Metadata } from 'next'
+import { fetchAggregate, fetchPostDetail, fetchAdjacentPosts } from '@/lib/api'
 import { mergeThemeConfig, metaFlags, type SingleThemeConfig } from '@/lib/theme-config'
 import { renderMarkdown } from '@/lib/markdown'
+import { ArticleTree } from '@/components/content/ArticleTree'
+import { LikeButton } from '@/components/post/LikeButton'
+import { CommentSection } from '@/components/comment/CommentSection'
 
 /**
  * 文章详情（post.php → PostPage）
@@ -13,7 +17,7 @@ import { renderMarkdown } from '@/lib/markdown'
  * section.post-near > ul>li*2；
  * section.post-tags；
  * section.post-author > figure.author-avatar + .author-info；
- * section#comments.post-comments（S4 阶段接评论组件）
+ * section#comments.post-comments（S4 评论组件）
  */
 export default async function PostPage({
   params,
@@ -34,6 +38,12 @@ export default async function PostPage({
   const showStaleWarning =
     modified && Date.now() - modified.getTime() >= 15552000000
 
+  const { prev, next } = await fetchAdjacentPosts(
+    post.id,
+    post.created,
+    post.categorySlug,
+  )
+
   return (
     <main>
       <div className="wrap min">
@@ -45,6 +55,10 @@ export default async function PostPage({
             </time>
             {meta.show_category && post.category && (
               <span className="category">{post.category}</span>
+            )}
+            {/* V10：阅读量图标（.post-meta .view:before 已在 single.css 定义） */}
+            {typeof post.count?.read === 'number' && (
+              <span className="view">{post.count.read}</span>
             )}
             {meta.show_comments && (
               <span className="comments">{post.count?.comments ?? 0}</span>
@@ -63,11 +77,36 @@ export default async function PostPage({
           <div dangerouslySetInnerHTML={{ __html: html }} />
         </article>
 
-        {/* 上下篇（A8：core 不含 prev/next，S2 阶段前端额外查相邻两条） */}
+        {/* 目录树（single.js:48-106） */}
+        <ArticleTree markdownText={post.text} />
+
+        {/* 上下篇（A8） */}
         <section className="post-near">
           <ul>
-            <li>上一篇: 看完啦 (つд⊂)</li>
-            <li>下一篇: 看完啦 (つد⊂)</li>
+            <li>
+              上一篇:{' '}
+              {prev ? (
+                <Link
+                  href={`/posts/${prev.categorySlug || 'uncategorized'}/${prev.slug}`}
+                >
+                  {prev.title}
+                </Link>
+              ) : (
+                '看完啦 (つд⊂)'
+              )}
+            </li>
+            <li>
+              下一篇:{' '}
+              {next ? (
+                <Link
+                  href={`/posts/${next.categorySlug || 'uncategorized'}/${next.slug}`}
+                >
+                  {next.title}
+                </Link>
+              ) : (
+                '看完啦 (つд⊂)'
+              )}
+            </li>
           </ul>
         </section>
 
@@ -96,9 +135,36 @@ export default async function PostPage({
           </section>
         )}
 
-        {/* S4 阶段接评论组件 */}
-        <section id="comments" className="post-comments" />
+        {/* 点赞按钮（M8） */}
+        <LikeButton postId={post.id} initialLikes={post.count?.like ?? 0} />
+
+        {/* 评论区（S4） */}
+        <CommentSection postId={post.id} allowComment={post.allowComment} />
       </div>
     </main>
   )
+}
+
+/** 文章页 SEO/OG（A10） */
+export async function generateMetadata({
+  params,
+}: {
+  params: { category: string; slug: string }
+}): Promise<Metadata> {
+  const post = await fetchPostDetail(params.category, params.slug)
+  if (!post) return {}
+
+  const ogImage = post.cover || post.images?.[0]
+  return {
+    title: post.title,
+    description: post.summary || '',
+    openGraph: {
+      type: 'article',
+      title: post.title,
+      description: post.summary || '',
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
+      publishedTime: post.created,
+      modifiedTime: post.modified,
+    },
+  }
 }

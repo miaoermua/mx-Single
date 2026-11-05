@@ -1,9 +1,13 @@
+import { fetchSays } from '@/lib/api'
+
 /**
- * 说说 / 一言（mx 特性，S5 阶段接 /says）
+ * 说说 / 一言（mx 特性，M4）
  *
  * 复用 home-posts 列表版式。
  */
-export default function SaysPage() {
+export default async function SaysPage() {
+  const says = await fetchSays()
+
   return (
     <main>
       <div className="wrap min">
@@ -11,9 +15,16 @@ export default function SaysPage() {
           <h1>说说</h1>
         </section>
         <section className="home-posts">
-          <div className="post-item">
-            <p>（S5 阶段接 <code>GET /says</code>）</p>
-          </div>
+          {says.map((s) => (
+            <div className="post-item" key={s.id}>
+              <p>{s.content}</p>
+              <div className="post-meta">
+                <time className="date">
+                  {new Date(s.created).toLocaleDateString('zh-CN')}
+                </time>
+              </div>
+            </div>
+          ))}
         </section>
       </div>
     </main>

@@ -8,6 +8,7 @@ import '../styles/custom.css'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { SingleRuntime } from '@/components/layout/SingleRuntime'
+import { Lightbox } from '@/components/content/Lightbox'
 import { fetchAggregate } from '@/lib/api'
 import { mergeThemeConfig, type SingleThemeConfig } from '@/lib/theme-config'
 import { resolveWallpaper } from '@/lib/wallpaper'
@@ -80,10 +81,12 @@ export default async function RootLayout({
         <Header aggregate={agg} theme={theme} />
         {children}
         <Footer aggregate={agg} theme={theme} />
-        {/* Prism 高亮（S3 阶段在客户端按需调用，这里先引入脚本） */}
+        {/* Prism 高亮（路由变更后由 SingleRuntime 重跑） */}
         <script src="/vendor/prism.js" defer />
-        {/* 运行时效果：菜单/夜间/搜索/返回顶部/复制提示等（第 4.1 节） */}
+        {/* 运行时效果：菜单/夜间/搜索/返回顶部/复制提示/评论高亮等（第 4.1 节） */}
         <SingleRuntime copyNotice={theme.copy_notice === '1'} nightMode={theme.night_mode || '0'} />
+        {/* 图片灯箱（kico.js:165-244） */}
+        <Lightbox />
       </body>
     </html>
   )

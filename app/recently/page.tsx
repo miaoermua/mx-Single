@@ -1,9 +1,13 @@
+import { fetchRecently } from '@/lib/api'
+
 /**
- * 动态（mx 特性，S5 阶段接 /recently）
+ * 动态（mx 特性，M4）
  *
  * 复用 home-posts 列表版式。
  */
-export default function RecentlyPage() {
+export default async function RecentlyPage() {
+  const recently = await fetchRecently()
+
   return (
     <main>
       <div className="wrap min">
@@ -11,9 +15,16 @@ export default function RecentlyPage() {
           <h1>动态</h1>
         </section>
         <section className="home-posts">
-          <div className="post-item">
-            <p>（S5 阶段接 <code>GET /recently</code>）</p>
-          </div>
+          {recently.map((r) => (
+            <div className="post-item" key={r.id}>
+              <p>{r.content}</p>
+              <div className="post-meta">
+                <time className="date">
+                  {new Date(r.created).toLocaleDateString('zh-CN')}
+                </time>
+              </div>
+            </div>
+          ))}
         </section>
       </div>
     </main>
