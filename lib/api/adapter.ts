@@ -62,10 +62,10 @@ export function parsePagination(raw: AnyObj): Pagination | undefined {
   const p = camelKeys<AnyObj>(raw)
   if (typeof p.page !== 'number') return undefined
   return {
-    page: p.page,
-    size: p.size,
-    total: p.total,
-    totalPages: p.totalPages,
+    page: Number(p.page),
+    size: Number(p.size),
+    total: Number(p.total),
+    totalPages: Number(p.totalPages),
     hasPrev: !!p.hasPrev,
     hasNext: !!p.hasNext,
   }

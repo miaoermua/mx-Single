@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { fetchPosts } from '../../lib/api'
+import { fetchPosts } from '@/lib/api'
 
 /**
  * 搜索结果页（archive.php 列表版式 → SearchPage）

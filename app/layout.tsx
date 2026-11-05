@@ -5,12 +5,12 @@ import '../styles/kico.css'
 import '../styles/single.css'
 import '../styles/custom.css'
 
-import { Header } from '../components/layout/Header'
-import { Footer } from '../components/layout/Footer'
-import { SingleRuntime } from '../components/layout/SingleRuntime'
-import { fetchAggregate } from '../lib/api'
-import { mergeThemeConfig, type SingleThemeConfig } from '../lib/theme-config'
-import { resolveWallpaper } from '../lib/wallpaper'
+import { Header } from '@/components/layout/Header'
+import { Footer } from '@/components/layout/Footer'
+import { SingleRuntime } from '@/components/layout/SingleRuntime'
+import { fetchAggregate } from '@/lib/api'
+import { mergeThemeConfig, type SingleThemeConfig } from '@/lib/theme-config'
+import { resolveWallpaper } from '@/lib/wallpaper'
 
 /**
  * 从 cookie 读 night 值，SSR 输出 dark-theme class 防闪屏（V4）。

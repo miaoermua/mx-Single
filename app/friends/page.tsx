@@ -1,4 +1,4 @@
-import { fetchFriends } from '../../lib/api'
+import { fetchFriends } from '@/lib/api'
 
 /**
  * 友链页（线上完整版 → FriendsPage）

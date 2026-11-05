@@ -92,8 +92,14 @@ export function mergeThemeConfig(
   return {
     ...DEFAULT_THEME_CONFIG,
     ...partial,
-    wallpaper: { ...DEFAULT_THEME_CONFIG.wallpaper, ...partial.wallpaper },
-    nav_extra: { ...DEFAULT_THEME_CONFIG.nav_extra, ...partial.nav_extra },
+    wallpaper: {
+      ...DEFAULT_THEME_CONFIG.wallpaper,
+      ...(partial.wallpaper || {}),
+    } as WallpaperConfig,
+    nav_extra: {
+      ...DEFAULT_THEME_CONFIG.nav_extra,
+      ...(partial.nav_extra || {}),
+    },
   }
 }
 

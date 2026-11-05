@@ -5,7 +5,7 @@
  * SSR 只输出 URL，不发起图片请求；加载失败由浏览器侧回退纯色。
  */
 
-import type { WallpaperConfig } from '../theme-config'
+import type { WallpaperConfig } from './theme-config'
 
 /** 根据 config.source 计算一个背景图 URL */
 export function resolveWallpaper(

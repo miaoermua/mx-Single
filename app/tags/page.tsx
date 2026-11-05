@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { fetchCategories } from '../../lib/api'
+import { fetchCategories } from '@/lib/api'
 
 /**
  * 标签云（tags.php → TagsPage）

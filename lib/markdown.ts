@@ -20,13 +20,11 @@ export function renderMarkdown(text: string): string {
   if (!text) return ''
   let headingIndex = 0
   const renderer = new marked.Renderer()
-  const origHeading = renderer.heading.bind(renderer)
-  renderer.heading = ({ text: t, depth }: { text: string; depth: number }) => {
+  renderer.heading = (text: string, level: number) => {
     headingIndex += 1
     const id = `title-${headingIndex}`
-    return `<h${depth} id="${id}">${t}</h${depth}>`
+    return `<h${level} id="${id}">${text}</h${level}>`
   }
-  // marked v12 的 renderer API
   const html = marked.parse(text, { renderer } as Parameters<typeof marked.parse>[1])
   return typeof html === 'string' ? html : ''
 }

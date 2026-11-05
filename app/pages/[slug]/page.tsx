@@ -1,6 +1,6 @@
-import { fetchPage } from '../../../lib/api'
+import { fetchPage } from '@/lib/api'
 import { notFound } from 'next/navigation'
-import { renderMarkdown } from '../../../lib/markdown'
+import { renderMarkdown } from '@/lib/markdown'
 
 /**
  * 独立页面（page.php → PagePage）

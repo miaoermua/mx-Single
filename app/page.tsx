@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { fetchAggregate, fetchPosts } from '../lib/api'
-import { mergeThemeConfig, metaFlags, type SingleThemeConfig } from '../lib/theme-config'
+import { fetchAggregate, fetchPosts } from '@/lib/api'
+import { mergeThemeConfig, metaFlags, type SingleThemeConfig } from '@/lib/theme-config'
 
 /**
  * 首页（index.php → HomePage）

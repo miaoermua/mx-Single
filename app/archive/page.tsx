@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { fetchCategories, fetchPosts } from '../../lib/api'
+import { fetchCategories, fetchPosts } from '@/lib/api'
 
 /**
  * 归档页（线上完整版 → ArchiveIndexPage）

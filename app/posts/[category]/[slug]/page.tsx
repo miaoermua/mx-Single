@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { fetchAggregate, fetchPostDetail } from '../../../lib/api'
-import { mergeThemeConfig, metaFlags, type SingleThemeConfig } from '../../../lib/theme-config'
-import { renderMarkdown } from '../../../lib/markdown'
+import { fetchAggregate, fetchPostDetail } from '@/lib/api'
+import { mergeThemeConfig, metaFlags, type SingleThemeConfig } from '@/lib/theme-config'
+import { renderMarkdown } from '@/lib/markdown'
 
 /**
  * 文章详情（post.php → PostPage）

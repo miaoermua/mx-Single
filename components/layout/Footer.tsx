@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import type { AggregateData } from '../../lib/api'
-import type { SingleThemeConfig } from '../../lib/theme-config'
+import type { AggregateData } from '@/lib/api'
+import type { SingleThemeConfig } from '@/lib/theme-config'
 
 /**
  * 页脚（footer.php → Footer）
