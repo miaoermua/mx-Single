@@ -103,14 +103,28 @@ export function SingleRuntime({
     if (!copyNotice) return
 
     const showNotice = () => {
-      // 简易 toast，视觉对齐 .ks-notice.yellow
+      // 与 kico.js 的 kico.notice() 同构：
+      // <notice><div class="ks-notice yellow"><span>文本</span></div></notice>
+      //
+      // .ks-notice 是 display:table + border-radius:3em，内边距与胶囊高度
+      // 全由内部的 <span>（padding: .5em 1em）撑开。之前直接把文本塞进
+      // 外层 div，没有 span，盒子退化成零内边距的细条，圆角也就看不出来。
+      let host = document.querySelector<HTMLElement>('notice')
+      if (!host) {
+        host = document.createElement('notice')
+        document.body.appendChild(host)
+      }
       const n = document.createElement('div')
       n.className = 'ks-notice yellow'
-      n.textContent = '转载请保留原文出处！'
-      n.style.cssText =
-        'position:fixed;top:1em;left:50%;transform:translateX(-50%);z-index:9999;'
-      document.body.appendChild(n)
-      setTimeout(() => n.remove(), 2000)
+      const span = document.createElement('span')
+      span.textContent = '转载请保留原文出处！'
+      n.appendChild(span)
+      host.appendChild(n)
+      // 退场走 .remove 的淡出动画，与 kico 一致
+      window.setTimeout(() => {
+        n.classList.add('remove')
+        window.setTimeout(() => n.remove(), 300)
+      }, 2000)
     }
 
     document.addEventListener('copy', showNotice)
