@@ -144,7 +144,13 @@ export async function fetchPostDetail(
  * 所以单独打 /pages 列表接口，返回 { data: [...], pagination } 信封。
  * 详见 docs/EXTRA_FEATURES.md 第 4 节。
  */
-export async function fetchPages(): Promise<{ title: string; slug: string }[]> {
+/** 独立页面摘要（顶栏菜单 / 页脚站点栏 / 站点页共用） */
+export interface PageSummary {
+  title: string
+  slug: string
+}
+
+export async function fetchPages(): Promise<PageSummary[]> {
   if (!hasCore()) return [{ title: '关于', slug: 'about' }]
   const raw = await get<unknown>('/pages?size=50')
   if (!raw) return []

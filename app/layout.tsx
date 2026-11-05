@@ -10,7 +10,7 @@ import { Footer } from '@/components/layout/Footer'
 import { SingleRuntime } from '@/components/layout/SingleRuntime'
 import { Lightbox } from '@/components/content/Lightbox'
 import { WallpaperFallback } from '@/components/layout/WallpaperFallback'
-import { fetchAggregate, fetchSnippet } from '@/lib/api'
+import { fetchAggregate, fetchPages, fetchSnippet } from '@/lib/api'
 import { mergeThemeConfig, type SingleThemeConfig } from '@/lib/theme-config'
 import { resolveWallpaper } from '@/lib/wallpaper'
 
@@ -66,6 +66,8 @@ export default async function RootLayout({
     : themeFromAggregate || (snippet as Partial<SingleThemeConfig> | undefined)
   const theme = mergeThemeConfig(mergedRaw)
   const wallpaperUrl = resolveWallpaper(theme.wallpaper!)
+  // 顶栏「站点」下拉菜单用（与 Footer 的 fetchPages 在同一渲染周期内自动去重）
+  const pages = await fetchPages()
 
   return (
     <html lang="zh">
@@ -85,7 +87,7 @@ export default async function RootLayout({
         )}
       </head>
       <body className={bodyClass}>
-        <Header aggregate={agg} theme={theme} />
+        <Header aggregate={agg} theme={theme} pages={pages} />
         {children}
         <Footer aggregate={agg} theme={theme} />
         {/* Prism 高亮（路由变更后由 SingleRuntime 重跑） */}

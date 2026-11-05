@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import type { AggregateData } from '@/lib/api'
+import type { AggregateData, PageSummary } from '@/lib/api'
 import type { SingleThemeConfig } from '@/lib/theme-config'
 
 /**
@@ -13,9 +13,12 @@ import type { SingleThemeConfig } from '@/lib/theme-config'
 export function Header({
   aggregate,
   theme,
+  pages = [],
 }: {
   aggregate: AggregateData
   theme: SingleThemeConfig
+  /** 独立页面列表，供「站点」下拉菜单用（layout 注入） */
+  pages?: PageSummary[]
 }) {
   const title = aggregate.seo?.title || aggregate.user?.name || 'Single'
   const nav = theme.nav_extra || {}
@@ -44,10 +47,25 @@ export function Header({
         {nav.notes && <Link href="/notes">日记</Link>}
         {nav.timeline && <Link href="/timeline">时间轴</Link>}
         {nav.friends && <Link href="/friends">朋友们</Link>}
-        {/* 站点：【额外实现，非 Single 标准】独立页面聚合入口，
-            替代原先逐个铺开 aggregate.pages 的做法（该字段在 v12.x 恒为空）
+        {/* 站点：【额外实现，非 Single 标准】独立页面聚合入口 + 下拉菜单。
+            父项进 /sites 聚合页，子项直达各页面。
+            .has-child / .sub-menu 的展开由 single.css 负责：桌面 hover、
+            移动端常驻展开（kico.css 原有样式，无需 JS）。
             详见 docs/EXTRA_FEATURES.md 第 5 节 */}
-        {nav.sites && <Link href="/sites">站点</Link>}
+        {nav.sites && (
+          <div className="has-child">
+            <Link href="/sites">站点</Link>
+            {pages.length > 0 && (
+              <div className="sub-menu">
+                {pages.map((p) => (
+                  <Link key={p.slug} href={`/pages/${p.slug}`}>
+                    {p.title}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </nav>
     </header>
   )

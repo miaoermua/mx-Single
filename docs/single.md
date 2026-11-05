@@ -176,7 +176,7 @@ curl "https://api.example.com/api/v2/snippets/theme/single"
 - 评论：嵌套回复、分页、审核提示、Markdown 渲染、外链自动转链接
 - 点赞、阅读量上报（`/api/like`、`/api/ack`）
 - 日记（notes）、说说（says）、时间轴（timeline）
-- 站点页：core 独立页面聚合（顶栏「站点」入口）
+- 站点页：core 独立页面聚合，顶栏「站点」以下拉菜单列出各页面
 - 友链页与自助申请
 - Markdown 目录树、代码高亮、图片灯箱、链接卡片
 - 夜间模式、复制提示、返回顶部、移动端抽屉目录

@@ -175,7 +175,20 @@ mx 适配版新增了完整的日记列表页和详情页，复用文章页的 `
 
 无页面时输出一条 `.post-item > h2` 的「暂无页面」占位。
 
-**顶栏**：菜单末尾追加 `<Link href="/sites">站点</Link>`，由 `nav_extra.sites` 控制（默认 `true`）。原先 `pages.map(...)` 的逐条渲染已移除。
+**顶栏**：菜单末尾输出 `.has-child` 结构，父项「站点」进聚合页，`.sub-menu` 内是各独立页面：
+
+```html
+<div class="has-child">
+  <a href="/sites">站点</a>
+  <div class="sub-menu">
+    <a href="/pages/{slug}">{页面标题}</a>
+  </div>
+</div>
+```
+
+展开行为完全复用原主题 CSS（`styles/single.css` 264-300 行）：桌面 `:hover` / `:focus-within` 展开，移动端 `.sub-menu` 常驻并缩进成圆点列表，**不需要额外 JS**。由 `nav_extra.sites` 控制（默认 `true`）。原先 `pages.map(...)` 的平铺渲染已移除。
+
+页面列表由 `app/layout.tsx` 统一 `await fetchPages()` 后注入 `<Header>`，与页脚的调用在同一渲染周期内被 Next 自动去重。
 
 **代码位置**：
 - 页面：`app/sites/page.tsx`
