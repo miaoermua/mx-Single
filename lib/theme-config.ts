@@ -27,6 +27,8 @@ export interface NavExtra {
   says?: boolean
   timeline?: boolean
   friends?: boolean
+  /** 站点页（独立页面聚合列表），mx 新增 */
+  sites?: boolean
 }
 
 export interface ArchiveMetaFlag {
@@ -83,6 +85,7 @@ export const DEFAULT_THEME_CONFIG: SingleThemeConfig = {
     says: true,
     timeline: true,
     friends: true,
+    sites: true,
   },
 }
 

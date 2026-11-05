@@ -906,17 +906,18 @@ footer .toggle-list:before{ content: '\f00b' }
 
 footer .widget{ padding: 2em 0 }
 
-footer .title-comments:after,
-footer .title-recent:after,
-footer .title-date:after{
+footer .title-pages:after,
+footer .title-notes:after,
+footer .title-recent:after{
     float: right;
     margin-right: .75em;
     font-family: "FontAwesome";
 }
 
-footer .title-comments:after{ content: "\f0e6" }
-footer .title-recent:after{ content: "\f040" }
-footer .title-date:after{ content: "\f017" }
+/* 三栏图标：文件 / 日历 / 地球 */
+footer .title-recent:after{ content: "\f0f6" }
+footer .title-notes:after{ content: "\f073" }
+footer .title-pages:after{ content: "\f0ac" }
 
 footer .widget ul{
     margin: 0;

@@ -98,7 +98,7 @@ npm run build      # 生产构建
 | `docs/single.md` | 主题介绍页（概述、部署、后端 Snippet 配置、配置项说明），面向使用者 |
 | `docs/config.test.yaml` | Snippet 主题配置示例 |
 
-新增「原主题没有」的能力时，同步更新 `docs/EXTRA_FEATURES.md`；改动运行/配置方式时更新 `docs/README.md`。
+新增「原主题没有」的能力、或**替换原主题已有的实现**时，同步更新 `docs/EXTRA_FEATURES.md`（按现有编号续写：背景 / 数据源 / DOM 契约 / 代码位置），并给对应代码的模块头注释加 `【额外实现，非 Single 标准】` 标记；改动运行/配置方式时更新 `docs/README.md`。
 
 ## 10. 不要做的事
 

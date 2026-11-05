@@ -137,6 +137,27 @@ export async function fetchPostDetail(
 
 /* ---------- 页面 ---------- */
 
+/**
+ * 页面列表（页脚「站点」栏用）。【额外实现，非 Single 标准】
+ *
+ * aggregate 在 v12.x 不返回 pageMeta（线上实测只有 user/seo/url/theme 等），
+ * 所以单独打 /pages 列表接口，返回 { data: [...], pagination } 信封。
+ * 详见 docs/EXTRA_FEATURES.md 第 4 节。
+ */
+export async function fetchPages(): Promise<{ title: string; slug: string }[]> {
+  if (!hasCore()) return [{ title: '关于', slug: 'about' }]
+  const raw = await get<unknown>('/pages?size=50')
+  if (!raw) return []
+  const arr = unwrap<Record<string, unknown>[]>(raw)
+  if (!Array.isArray(arr)) return []
+  return arr
+    .map((p) => ({
+      title: String(p.title ?? ''),
+      slug: String(p.slug ?? ''),
+    }))
+    .filter((p) => p.slug)
+}
+
 export async function fetchPage(slug: string): Promise<PageDetail | null> {
   if (!hasCore()) {
     return mockPage(slug)

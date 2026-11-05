@@ -96,3 +96,90 @@ mx 适配版新增了完整的日记列表页和详情页，复用文章页的 `
 - 详情页：`app/notes/[nid]/page.tsx`
 - 数据适配：`lib/api/adapter.ts` → `adaptNote`、`Note` 接口
 - API 调用：`lib/api/index.ts` → `fetchNote`、`fetchNotes`
+
+---
+
+## 4. 页脚信息栏替换（最新文章 / 日记 / 站点）
+
+**背景**：原版 `functions.php:54` 的 `widget_set` 开启后固定输出三栏：**最新文章 / 时光机 / 最近评论**。mx 版保留「最新文章」，另外两栏换成「日记」和「站点」。
+
+替换原因：
+
+- **时光机**：按文章「创建月份」分组，而 core v12.x 没有按月归档的资源（`COMPATIBILITY.md` X4），只能从最近 6 篇文章反推月份。结果时间跨度极短、顺序也受列表排序影响（会出现 2023 年 1 月夹在 2026 年 1 月之后），对访客几乎没有导航价值。
+- **最近评论**：走 `/activity/recent`，取的是全站最新评论，噪声大，且把访客昵称与评论片段直接铺在页脚。
+
+新两栏的数据源都是 mx 的原生资源：
+
+- **日记**：`GET /notes?size=6`，点击进 `/notes/{nid}`
+- **站点**：`GET /pages?size=50`，点击进 `/pages/{slug}`
+
+**DOM 契约**（外层结构不变，仅 `h3` 的 class 与内容变化）：
+
+```html
+<div class="col-m-4">
+  <h3 class="title-notes">日记：</h3>
+  <ul><li><a href="/notes/{nid}" target="_blank">{标题}</a></li></ul>
+</div>
+<div class="col-m-4">
+  <h3 class="title-pages">站点：</h3>
+  <ul><li><a href="/pages/{slug}" target="_blank">{页面标题}</a></li></ul>
+</div>
+```
+
+**图标**：`styles/single.css` 中三栏 `h3::after` 的 FontAwesome 4.7 码位
+
+| class | 码位 | 图标 |
+| --- | --- | --- |
+| `title-recent` | `\f0f6` | file-text-o |
+| `title-notes` | `\f073` | calendar |
+| `title-pages` | `\f0ac` | globe |
+
+**为什么单独请求 `/pages`**：`GET /aggregate` 在 v12.x **不返回 `pageMeta`**（线上实测响应顶层只有 `user`、`seo`、`url`、`comment_options`、`latest_note_id`、`theme`、`ai`），所以 `AggregateData.pages` 恒为 `undefined`，改用列表接口。
+
+**兜底**：日记没有标题时取正文纯文本前 18 字，再退回 `日记 #{nid}`；页面列表按 `slug` 过滤空值。
+
+**代码位置**：
+- 渲染：`components/layout/Footer.tsx`
+- 页面列表：`lib/api/index.ts` → `fetchPages`
+- 图标：`styles/single.css` → `footer .title-*:after`
+
+---
+
+## 5. 站点页 + 顶栏入口
+
+**背景**：原版 `header.php` 的菜单是「首页 / 归档 / 日记 / 时间轴 / 朋友们」，之后把后台的每个独立页面**逐条**渲染成菜单项。mx 版沿用这段逻辑时有两个问题：
+
+1. `GET /aggregate` 在 v12.x 不返回 `pageMeta`（见第 4 节），`aggregate.pages` 恒为 `undefined`，逐条铺开的代码实际一条也渲染不出来；
+2. 即便拿到数据，页面数量一多顶栏也会被挤爆。
+
+改为一个固定的「站点」入口，进去是独立页面的聚合列表。
+
+**路由**：`app/sites/page.tsx`
+
+**数据源**：`GET /pages?size=50`（`lib/api/index.ts` → `fetchPages`）
+
+**版式**：`app/notes/page.tsx`（日记列表）的副本，`.home-title` + `.home-posts` + `.post-item` 全套沿用，**只保留标题，不输出摘要 `<p>`**——独立页面正文动辄整篇 Markdown，截前 100 字既无意义又拖慢渲染。
+
+**DOM 契约**：
+
+```html
+<main>
+  <div class="wrap min">
+    <section class="home-title"><h1>站点</h1><span>本站的独立页面</span></section>
+    <section class="home-posts">
+      <div class="post-item"><h2><a href="/pages/{slug}">{页面标题}</a></h2></div>
+    </section>
+  </div>
+</main>
+```
+
+无页面时输出一条 `.post-item > h2` 的「暂无页面」占位。
+
+**顶栏**：菜单末尾追加 `<Link href="/sites">站点</Link>`，由 `nav_extra.sites` 控制（默认 `true`）。原先 `pages.map(...)` 的逐条渲染已移除。
+
+**代码位置**：
+- 页面：`app/sites/page.tsx`
+- 顶栏：`components/layout/Header.tsx` → `nav.head-menu`
+- 数据：`lib/api/index.ts` → `fetchPages`
+- 开关：`lib/theme-config.ts` → `NavExtra.sites`
+

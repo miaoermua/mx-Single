@@ -7,8 +7,13 @@
 
 - 评论
 - 日记
-- 友链
+- 友链（非公开内容实现）
+- Pages
 - Markdown 扩展，LinkCard
+- RSS：/feed & /atom.xml
+
+替换 footer “时光机” 为 “日记”、“最近评论” 为 “站点 Pages”
+
 
 不要用于生产环境，目前来说只是个玩具，并没有明确完善他。
 

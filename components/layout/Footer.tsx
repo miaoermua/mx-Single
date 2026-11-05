@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import type { AggregateData, PostSummary, RecentComment } from '@/lib/api'
-import { fetchRecentPosts, fetchRecentComments } from '@/lib/api'
+import type { AggregateData, Note, PostSummary } from '@/lib/api'
+import { fetchRecentPosts, fetchNotes, fetchPages } from '@/lib/api'
 import type { SingleThemeConfig } from '@/lib/theme-config'
 import { RouteLoader } from './RouteLoader'
 
@@ -9,8 +9,13 @@ import { RouteLoader } from './RouteLoader'
  *
  * DOM 契约：
  * footer > .buttons > button.to-top（+ 动态 .toggle-list，目录树用，由 ArticleTree 控制）；
- * .wrap.min > section.widget > .row > .col-m-4*3（h3.title-recent/.title-date/.title-comments + ul>li）；
+ * .wrap.min > section.widget > .row > .col-m-4*3（h3.title-recent/.title-notes/.title-pages + ul>li）；
  * section.sub-footer > p
+ *
+ * 【额外实现，非 Single 标准】三栏内容相对原主题的调整（原为 最新文章 / 时光机 / 最近评论）：
+ * - 时光机 → 日记：按月归档对访客价值低，改为直达最新日记
+ * - 最近评论 → 站点：列出 core 的独立页面（/pages/:slug）
+ * 详见 docs/EXTRA_FEATURES.md 第 4 节。
  */
 export async function Footer({
   aggregate,
@@ -19,16 +24,18 @@ export async function Footer({
   aggregate: AggregateData
   theme: SingleThemeConfig
 }) {
-  const siteName = aggregate.seo?.title || 'Single'
+  const siteName = aggregate.seo?.title || 'mx-Single'
   const siteUrl = aggregate.url?.siteUrl || '/'
   const widgetSet = theme.widget_set === '1'
 
   let recentPosts: PostSummary[] = []
-  let recentComments: RecentComment[] = []
+  let recentNotes: Note[] = []
+  let pages: { title: string; slug: string }[] = []
   if (widgetSet) {
-    ;[recentPosts, recentComments] = await Promise.all([
+    ;[recentPosts, recentNotes, pages] = await Promise.all([
       fetchRecentPosts(6),
-      fetchRecentComments(),
+      fetchNotes(6),
+      fetchPages(),
     ])
   }
 
@@ -59,28 +66,25 @@ export async function Footer({
                 </ul>
               </div>
               <div className="col-m-4">
-                <h3 className="title-date">时光机：</h3>
-                {/* core 无按月归档资源（X4），用文章列表按月分组 */}
+                <h3 className="title-notes">日记：</h3>
                 <ul>
-                  {groupByMonth(recentPosts).map((g) => (
-                    <li key={g.label}>
-                      <Link href={`/archive?month=${g.key}`} rel="nofollow" target="_blank">
-                        {g.label}
+                  {recentNotes.map((n) => (
+                    <li key={n.id}>
+                      <Link href={`/notes/${n.nid}`} target="_blank">
+                        {n.title || plainText(n.content).slice(0, 18) || `日记 #${n.nid}`}
                       </Link>
                     </li>
                   ))}
                 </ul>
               </div>
               <div className="col-m-4">
-                <h3 className="title-comments">最近评论：</h3>
+                <h3 className="title-pages">站点：</h3>
                 <ul>
-                  {recentComments.map((c, i) => (
-                    <li key={i}>
-                      {c.author}:{' '}
-                      <a href={c.link || '#'} rel="nofollow" target="_blank">
-                        {c.content.slice(0, 10)}
-                        {c.content.length > 10 ? '...' : ''}
-                      </a>
+                  {pages.map((p) => (
+                    <li key={p.slug}>
+                      <Link href={`/pages/${p.slug}`} target="_blank">
+                        {p.title}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -97,7 +101,7 @@ export async function Footer({
               target="_blank"
               rel="nofollow"
             >
-              Single
+              mx-Single
             </a>
             .
             {theme.beian && (
@@ -119,15 +123,15 @@ export async function Footer({
   )
 }
 
-/** 把文章列表按月分组（A16 时光机） */
-function groupByMonth(posts: PostSummary[]): Array<{ key: string; label: string }> {
-  const map = new Map<string, string>()
-  for (const p of posts) {
-    const d = new Date(p.created)
-    if (isNaN(d.getTime())) continue
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月`
-    if (!map.has(key)) map.set(key, label)
-  }
-  return Array.from(map.entries()).map(([key, label]) => ({ key, label }))
+/** 日记正文是 Markdown，列表里只取纯文本前若干字 */
+function plainText(content: string): string {
+  return (content || '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/`{1,3}/g, '')
+    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }

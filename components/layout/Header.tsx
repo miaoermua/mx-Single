@@ -18,7 +18,6 @@ export function Header({
   theme: SingleThemeConfig
 }) {
   const title = aggregate.seo?.title || aggregate.user?.name || 'Single'
-  const pages = aggregate.pages || []
   const nav = theme.nav_extra || {}
 
   return (
@@ -45,12 +44,10 @@ export function Header({
         {nav.notes && <Link href="/notes">日记</Link>}
         {nav.timeline && <Link href="/timeline">时间轴</Link>}
         {nav.friends && <Link href="/friends">朋友们</Link>}
-        {/* 独立页面 */}
-        {pages.map((p) => (
-          <Link key={p.slug} href={`/pages/${p.slug}`}>
-            {p.title}
-          </Link>
-        ))}
+        {/* 站点：【额外实现，非 Single 标准】独立页面聚合入口，
+            替代原先逐个铺开 aggregate.pages 的做法（该字段在 v12.x 恒为空）
+            详见 docs/EXTRA_FEATURES.md 第 5 节 */}
+        {nav.sites && <Link href="/sites">站点</Link>}
       </nav>
     </header>
   )

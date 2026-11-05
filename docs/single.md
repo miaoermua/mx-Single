@@ -103,7 +103,7 @@ night_mode: '0'
 # 复制提示：'0' 关闭 | '1' 开启
 copy_notice: '1'
 
-# 页尾信息栏（最新文章 / 最近评论 / 时光机）：'0' 关闭 | '1' 开启
+# 页尾信息栏（最新文章 / 日记 / 站点）：'0' 关闭 | '1' 开启
 widget_set: '1'
 
 # 首页、归档页属性显示（每项一个开关）
@@ -134,6 +134,7 @@ nav_extra:
   says: true
   timeline: true
   friends: true
+  sites: true
 
 # ICP 备案号，显示在页脚 Single 右边，不填则不输出
 beian:
@@ -162,11 +163,11 @@ curl "https://api.example.com/api/v2/snippets/theme/single"
 | `author_text` | string | `''` | 文章底部作者信息，支持 HTML |
 | `night_mode` | `'0'\|'1'\|'2'` | `'0'` | 夜间模式：关闭 / 按时段自动 / 始终开启 |
 | `copy_notice` | `'0'\|'1'` | `'1'` | 访客复制正文时是否提示版权 |
-| `widget_set` | `'0'\|'1'` | `'1'` | 页尾三栏信息是否显示 |
+| `widget_set` | `'0'\|'1'` | `'1'` | 页尾三栏（最新文章 / 日记 / 站点）是否显示 |
 | `archive_meta` | object[] | 分类 + 评论数 | 列表页显示的元信息开关 |
 | `post_meta` | object[] | 分类 + 评论数 | 文章页显示的元信息开关 |
 | `wallpaper` | object | 见上文 | 随机背景配置，支持 API 失败后回退 CDN 或固定图 |
-| `nav_extra` | object | 全部 `true` | 归档 / 日记 / 说说 / 时间轴 / 友链的导航入口开关 |
+| `nav_extra` | object | 全部 `true` | 归档 / 日记 / 说说 / 时间轴 / 友链 / 站点的导航入口开关 |
 | `beian` | string | `''` | ICP 备案号，不填则不输出 |
 
 ## 功能
@@ -175,6 +176,7 @@ curl "https://api.example.com/api/v2/snippets/theme/single"
 - 评论：嵌套回复、分页、审核提示、Markdown 渲染、外链自动转链接
 - 点赞、阅读量上报（`/api/like`、`/api/ack`）
 - 日记（notes）、说说（says）、时间轴（timeline）
+- 站点页：core 独立页面聚合（顶栏「站点」入口）
 - 友链页与自助申请
 - Markdown 目录树、代码高亮、图片灯箱、链接卡片
 - 夜间模式、复制提示、返回顶部、移动端抽屉目录

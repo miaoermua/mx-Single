@@ -108,9 +108,9 @@ npm run start    # 默认 3000 端口，可用 PORT 覆盖
 | `author_text` | 首页签名文案 | 字符串 |
 | `night_mode` | 夜间模式 | `0` 关闭 / `1` 按时 / `2` 始终 |
 | `copy_notice` | 复制提示 | `0` / `1` |
-| `widget_set` | 页脚小组件（时光机/最新文章/最近评论） | `0` / `1` |
+| `widget_set` | 页脚小组件（最新文章 / 日记 / 站点） | `0` / `1` |
 | `beian` | ICP 备案号 | 不填则不输出 |
-| `nav_extra` | 额外导航项 | `{archive, notes, says, timeline, friends}` |
+| `nav_extra` | 额外导航项 | `{archive, notes, says, timeline, friends, sites}` |
 | `wallpaper` | 壁纸源策略 | 见 `WallpaperConfig` |
 
 ## 6. 页面路由
@@ -121,10 +121,11 @@ npm run start    # 默认 3000 端口，可用 PORT 覆盖
 | `/posts/[category]/[slug]` | 文章详情（评论、点赞、目录树） |
 | `/notes` | 日记列表 |
 | `/notes/[nid]` | 日记详情 |
-| `/archives` | 归档 |
+| `/archive` | 归档 |
 | `/timeline` | 时间轴 |
 | `/friends` | 友链（含自助申请） |
-| `/[slug]` | core 独立页面 |
+| `/sites` | 站点：core 独立页面聚合列表（无摘要） |
+| `/pages/[slug]` | core 独立页面详情 |
 
 ## 7. 评论
 
