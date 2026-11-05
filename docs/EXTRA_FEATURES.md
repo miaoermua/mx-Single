@@ -68,3 +68,31 @@ mx 适配版改为读 core 的友链数据，并提供自助申请入口。
 - 申请表单：`components/friends/ApplyForm.tsx`
 - 审核代理 route：`app/api/friends/audit/route.ts`
 - 数据适配：`lib/api/adapter.ts` → `adaptFriend`、`lib/api/index.ts` → `fetchFriends`
+
+---
+
+## 3. 日记（Note）
+
+**背景**：原版 Single 是 Typecho 主题，没有「日记」概念。日记是 mx-space core 的原生功能（类似短文/微博），有独立的 `nid` 编号、心情、天气等元数据。
+
+mx 适配版新增了完整的日记列表页和详情页，复用文章页的 `.post-title` / `.post-content` / `.post-meta` 版式。
+
+**数据源**：
+- 列表：`GET /notes?size=50`（公开），返回日记数组
+- 详情：`GET /notes/nid/:nid`（公开），core v12.x 返回 `{ data: {...} }` 信封
+
+**适配字段**（`adaptNote`）：
+- `content`：core 的 `content` 常为 null，实际内容在 `text` 字段
+- `readCount` / `likeCount`：core 返回 `read_count` / `like_count`
+- `mood` / `weather`：心情与天气
+- `created` / `modified`：core 返回 `created_at` / `modified_at`（snake_case）
+
+**路由**：
+- 列表：`app/notes/page.tsx`，复用首页 `.home-title` + `.home-posts` 版式，展示标题、摘要、日期、心情/天气
+- 详情：`app/notes/[nid]/page.tsx`，复用文章页版式，展示标题、正文、目录树、阅读量、点赞
+
+**代码位置**：
+- 列表页：`app/notes/page.tsx`
+- 详情页：`app/notes/[nid]/page.tsx`
+- 数据适配：`lib/api/adapter.ts` → `adaptNote`、`Note` 接口
+- API 调用：`lib/api/index.ts` → `fetchNote`、`fetchNotes`

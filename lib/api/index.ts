@@ -168,7 +168,9 @@ export async function fetchComments(
   const raw = await get<unknown>(
     `/comments/ref/${refId}?page=${page}&size=${size}&ref=posts`,
   )
-  const items = unwrap<Record<string, unknown>[]>(raw).map(adaptComment)
+  if (!raw) return { items: [] }
+  const unwrapped = unwrap<Record<string, unknown>[]>(raw)
+  const items = (Array.isArray(unwrapped) ? unwrapped : []).map(adaptComment)
   const pagination = parsePagination(
     (raw as Record<string, unknown>)?.pagination as Record<string, unknown>,
   )
@@ -191,7 +193,9 @@ export async function fetchNote(nid: string): Promise<Note | null> {
   }
   const raw = await get<Record<string, unknown>>(`/notes/nid/${nid}`)
   if (!raw) return null
-  return adaptNote(raw)
+  // core v12.x 返回 { data: {...} } 信封
+  const data = (raw as Record<string, unknown>)?.data ?? raw
+  return adaptNote(data as Record<string, unknown>)
 }
 
 export async function fetchNotes(size = 10): Promise<Note[]> {
@@ -297,7 +301,18 @@ export async function fetchAdjacentPosts(
 export async function fetchRecentPosts(size = 6): Promise<PostSummary[]> {
   if (!hasCore()) return mockPosts.slice(0, size)
   const raw = await get<unknown>(`/posts?size=${size}&sortBy=created`)
-  return unwrap<Record<string, unknown>[]>(raw).map(adaptPost)
+  if (!raw) return []
+  const unwrapped = unwrap<Record<string, unknown>[]>(raw)
+  return (Array.isArray(unwrapped) ? unwrapped : []).map(adaptPost)
+}
+
+/** 热点文章：core 默认按 read_count 降序 */
+export async function fetchHotPosts(size = 6): Promise<PostSummary[]> {
+  if (!hasCore()) return mockPosts.slice(0, size)
+  const raw = await get<unknown>(`/posts?size=${size}`)
+  if (!raw) return []
+  const unwrapped = unwrap<Record<string, unknown>[]>(raw)
+  return (Array.isArray(unwrapped) ? unwrapped : []).map(adaptPost)
 }
 
 export interface RecentComment {

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { AggregateData, PostSummary, RecentComment } from '@/lib/api'
-import { fetchRecentPosts, fetchRecentComments } from '@/lib/api'
+import { fetchRecentPosts, fetchHotPosts, fetchRecentComments } from '@/lib/api'
 import type { SingleThemeConfig } from '@/lib/theme-config'
 
 /**
@@ -23,11 +23,13 @@ export async function Footer({
   const widgetSet = theme.widget_set === '1'
 
   let recentPosts: PostSummary[] = []
+  let hotPosts: PostSummary[] = []
   let recentComments: RecentComment[] = []
   if (widgetSet) {
-    // 并行获取最新文章与最近评论；时光机按月分组需 /aggregate/timeline（S5）
-    ;[recentPosts, recentComments] = await Promise.all([
+    // 并行获取最新文章、热点文章（按阅读量）、最近评论
+    ;[recentPosts, hotPosts, recentComments] = await Promise.all([
       fetchRecentPosts(6),
+      fetchHotPosts(6),
       fetchRecentComments(),
     ])
   }
@@ -58,13 +60,16 @@ export async function Footer({
                 </ul>
               </div>
               <div className="col-m-4">
-                <h3 className="title-date">时光机：</h3>
-                {/* core 无按月归档资源（X4），用文章列表按月分组 */}
+                <h3 className="title-date">热点文章：</h3>
+                {/* core 默认按 read_count 降序 */}
                 <ul>
-                  {groupByMonth(recentPosts).map((g) => (
-                    <li key={g.label}>
-                      <Link href={`/archive?month=${g.key}`} rel="nofollow" target="_blank">
-                        {g.label}
+                  {hotPosts.map((p) => (
+                    <li key={p.id}>
+                      <Link
+                        href={`/posts/${p.categorySlug || 'uncategorized'}/${p.slug}`}
+                        target="_blank"
+                      >
+                        {p.title}
                       </Link>
                     </li>
                   ))}
@@ -116,17 +121,4 @@ export async function Footer({
       </div>
     </footer>
   )
-}
-
-/** 把文章列表按月分组（A16 时光机） */
-function groupByMonth(posts: PostSummary[]): Array<{ key: string; label: string }> {
-  const map = new Map<string, string>()
-  for (const p of posts) {
-    const d = new Date(p.created)
-    if (isNaN(d.getTime())) continue
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月`
-    if (!map.has(key)) map.set(key, label)
-  }
-  return Array.from(map.entries()).map(([key, label]) => ({ key, label }))
 }

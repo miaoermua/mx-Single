@@ -142,13 +142,12 @@ export function adaptPost(raw: AnyObj): PostSummary {
     summary: (p.summary as string | undefined) || extractSummary(p.text as string | undefined),
     created: String(p.createdAt ?? p.created ?? ''),
     modified: p.modified as string | undefined,
-    count: count
-      ? {
-          read: count.read as number | undefined,
-          like: count.like as number | undefined,
-          comments: count.comments as number | undefined,
-        }
-      : undefined,
+    count: {
+      // core v12.x 列表接口 count 为 null，实际值在 read_count/like_count 顶层字段
+      read: p.readCount as number | undefined,
+      like: p.likeCount as number | undefined,
+      comments: count?.comments as number | undefined,
+    },
     // cover 可能是字符串或 { src, ... } 对象
     cover: typeof p.cover === 'string'
       ? p.cover
@@ -289,8 +288,11 @@ export interface Note {
   title?: string
   content: string
   created: string
+  modified?: string
   mood?: string
   weather?: string
+  readCount?: number
+  likeCount?: number
   bookmark?: { title: string; url: string }[]
   hide?: boolean
   password?: boolean
@@ -302,10 +304,14 @@ export function adaptNote(raw: AnyObj): Note {
     id: String(p.id ?? p._id ?? ''),
     nid: Number(p.nid ?? 0),
     title: p.title as string | undefined,
-    content: String(p.content ?? ''),
+    // core v12.x：content 常为 null，实际内容在 text 字段
+    content: String(p.content ?? p.text ?? ''),
     created: String(p.createdAt ?? p.created ?? ''),
+    modified: p.modifiedAt as string | undefined,
     mood: p.mood as string | undefined,
     weather: p.weather as string | undefined,
+    readCount: p.readCount as number | undefined,
+    likeCount: p.likeCount as number | undefined,
     bookmark: p.bookmark as Note['bookmark'],
     hide: p.hide as boolean | undefined,
     password: p.password as boolean | undefined,

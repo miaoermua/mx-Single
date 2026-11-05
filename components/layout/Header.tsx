@@ -18,7 +18,6 @@ export function Header({
   theme: SingleThemeConfig
 }) {
   const title = aggregate.seo?.title || aggregate.user?.name || 'Single'
-  const categories = aggregate.categories || []
   const pages = aggregate.pages || []
   const nav = theme.nav_extra || {}
 
@@ -41,23 +40,12 @@ export function Header({
       </form>
       <nav className="head-menu">
         <Link href="/">首页</Link>
-        {categories.length > 0 && (
-          <div className="has-child">
-            <a href="#">分类</a>
-            <div className="sub-menu">
-              {categories.map((c) => (
-                <Link key={c.id} href={`/category/${c.slug}`}>
-                  {c.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-        {/* mx 新页面导航开关（nav_extra） */}
+        {/* mx 新页面导航开关（nav_extra），顺序与线上一致 */}
         {nav.archive && <Link href="/archive">归档</Link>}
         {nav.notes && <Link href="/notes">日记</Link>}
         {nav.timeline && <Link href="/timeline">时间轴</Link>}
         {nav.friends && <Link href="/friends">朋友们</Link>}
+        {/* 独立页面 */}
         {pages.map((p) => (
           <Link key={p.slug} href={`/pages/${p.slug}`}>
             {p.title}
