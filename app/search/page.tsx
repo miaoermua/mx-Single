@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import { fetchPosts } from '@/lib/api'
+import { fetchSearch } from '@/lib/api'
 
 /**
  * 搜索结果页（archive.php 列表版式 → SearchPage）
  *
  * 原 PHP 是 POST 表单，这里改 GET /search?s=keyword（第 4.1 节）。
+ * 调用 core GET /search/post?keyword=
  */
 export default async function SearchPage({
   searchParams,
@@ -12,7 +13,7 @@ export default async function SearchPage({
   searchParams: { s?: string }
 }) {
   const keyword = searchParams.s || ''
-  const { items } = await fetchPosts(1, 50)
+  const items = await fetchSearch(keyword)
 
   return (
     <main>

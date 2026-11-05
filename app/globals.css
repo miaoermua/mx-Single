@@ -8,3 +8,8 @@
  */
 
 /* kico.css / single.css 都已定义 body 样式，这里不重复 */
+
+/* 背景图加载失败回退纯色（验收清单 #14） */
+body.no-wallpaper::before {
+  background-image: none !important;
+}

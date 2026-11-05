@@ -86,6 +86,22 @@ export async function fetchAggregate(themeName = 'single'): Promise<AggregateDat
   }
 }
 
+/* ---------- Snippet 主题配置（S6：GET /snippets/theme/:name，公开） ---------- */
+
+export async function fetchSnippet(
+  refType: string,
+  name: string,
+): Promise<Record<string, unknown> | null> {
+  if (!hasCore()) return null
+  const raw = await get<Record<string, unknown>>(
+    `/snippets/${refType}/${name}`,
+  )
+  if (!raw) return null
+  // core 返回 { data: {...} } 信封，取 data
+  const data = (raw as Record<string, unknown>).data
+  return data as Record<string, unknown> | null
+}
+
 /* ---------- 文章 ---------- */
 
 export interface PostsListResult {
@@ -213,6 +229,23 @@ export async function fetchTimeline(type = 'post'): Promise<TimelineItem[]> {
   }
   const raw = await get<unknown>(`/aggregate/timeline?type=${type}`)
   return unwrap<Record<string, unknown>[]>(raw).map(adaptTimeline)
+}
+
+/* ---------- 搜索（S5） ---------- */
+
+export async function fetchSearch(keyword: string): Promise<PostSummary[]> {
+  if (!keyword.trim()) return []
+  if (!hasCore()) {
+    // mock：按标题/摘要模糊匹配
+    const kw = keyword.toLowerCase()
+    return mockPosts.filter(
+      (p) =>
+        p.title.toLowerCase().includes(kw) ||
+        (p.summary || '').toLowerCase().includes(kw),
+    )
+  }
+  const raw = await get<unknown>(`/search/post?keyword=${encodeURIComponent(keyword)}`)
+  return unwrap<Record<string, unknown>[]>(raw).map(adaptPost)
 }
 
 /* ---------- 上下篇（A8：core 文章详情不含 prev/next，前端按 created 查相邻） ---------- */

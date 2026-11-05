@@ -12,6 +12,9 @@ import { useState, useEffect } from 'react'
  * - author ≤ 20、text ≤ 500、mail 必填且合法邮箱、url 可选但需带协议
  * - remember() 用 localStorage（C5）
  * - 提交成功后提示「你的评论正等待审核」（C6）
+ *
+ * 回复（C7）：replyTo 非空时走 POST /api/comment/reply { id: replyTo, ...payload }
+ *          并显示取消回复链接
  */
 
 interface FormData {
@@ -23,7 +26,15 @@ interface FormData {
 
 const STORAGE_KEY = 'single_comment_remember'
 
-export function CommentForm({ postId }: { postId: string }) {
+export function CommentForm({
+  postId,
+  replyTo,
+  onCancelReply,
+}: {
+  postId: string
+  replyTo: string | null
+  onCancelReply: () => void
+}) {
   const [data, setData] = useState<FormData>({ author: '', mail: '', url: '', text: '' })
   const [errors, setErrors] = useState<Partial<FormData>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -64,16 +75,21 @@ export function CommentForm({ postId }: { postId: string }) {
         STORAGE_KEY,
         JSON.stringify({ author: data.author, mail: data.mail, url: data.url }),
       )
-      const res = await fetch('/api/comment', {
+      // 回复走 /api/comment/reply，普通评论走 /api/comment（C7）
+      const endpoint = replyTo ? '/api/comment/reply' : '/api/comment'
+      const payload = replyTo
+        ? { ...data, id: replyTo, ref: postId }
+        : { ...data, id: postId }
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, id: postId }),
+        body: JSON.stringify(payload),
       })
       if (res.ok) {
         const result = await res.json().catch(() => ({}))
-        // C6：审核开启时提示
         setSuccessMsg(result.needAudit ? '你的评论正等待审核' : '评论成功！')
         setData((d) => ({ ...d, text: '' }))
+        if (replyTo) onCancelReply()
       } else {
         setSuccessMsg('评论失败，请稍后重试')
       }
@@ -86,6 +102,20 @@ export function CommentForm({ postId }: { postId: string }) {
 
   return (
     <form method="post" onSubmit={onSubmit}>
+      {replyTo && (
+        <span className="cancel-comment-reply">
+          正在回复评论 #{replyTo}{' '}
+          <a
+            href="javascript:void(0)"
+            onClick={(e) => {
+              e.preventDefault()
+              onCancelReply()
+            }}
+          >
+            点击取消
+          </a>
+        </span>
+      )}
       <div className="row">
         <fieldset className="col-m-6">
           <input

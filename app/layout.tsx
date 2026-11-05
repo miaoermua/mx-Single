@@ -9,7 +9,8 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { SingleRuntime } from '@/components/layout/SingleRuntime'
 import { Lightbox } from '@/components/content/Lightbox'
-import { fetchAggregate } from '@/lib/api'
+import { WallpaperFallback } from '@/components/layout/WallpaperFallback'
+import { fetchAggregate, fetchSnippet } from '@/lib/api'
 import { mergeThemeConfig, type SingleThemeConfig } from '@/lib/theme-config'
 import { resolveWallpaper } from '@/lib/wallpaper'
 
@@ -57,9 +58,13 @@ export default async function RootLayout({
   const bodyClass = isDark ? 'dark-theme' : undefined
 
   const agg = await fetchAggregate()
-  const theme = mergeThemeConfig(
-    agg.theme as Partial<SingleThemeConfig> | undefined,
-  )
+  // S6：Snippet 主题配置（公开 GET /snippets/theme/single）与 aggregate.theme 合并
+  const snippet = await fetchSnippet('theme', 'single')
+  const themeFromAggregate = agg.theme as Partial<SingleThemeConfig> | undefined
+  const mergedRaw = themeFromAggregate && snippet
+    ? { ...themeFromAggregate, ...snippet }
+    : themeFromAggregate || (snippet as Partial<SingleThemeConfig> | undefined)
+  const theme = mergeThemeConfig(mergedRaw)
   const wallpaperUrl = resolveWallpaper(theme.wallpaper!)
 
   return (
@@ -87,6 +92,8 @@ export default async function RootLayout({
         <SingleRuntime copyNotice={theme.copy_notice === '1'} nightMode={theme.night_mode || '0'} />
         {/* 图片灯箱（kico.js:165-244） */}
         <Lightbox />
+        {/* 背景图加载失败回退纯色（验收清单 #14） */}
+        <WallpaperFallback url={wallpaperUrl || ''} />
       </body>
     </html>
   )

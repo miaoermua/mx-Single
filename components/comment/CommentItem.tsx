@@ -9,6 +9,7 @@ import type { Comment } from '@/lib/api'
  *
  * 头像直接用后端 avatar 字段（C9：不要在前端按邮箱推导）
  * 子级 .comment-child 左缩进 2em（CSS 已定义）
+ * 回复按钮发出 single:reply 事件，由 CommentSection 接收设置 replyTo（C7）
  */
 export function CommentItem({
   comment,
@@ -18,6 +19,13 @@ export function CommentItem({
   postId: string
 }) {
   const hasChildren = comment.children && comment.children.length > 0
+
+  const onReply = (e: React.MouseEvent) => {
+    e.preventDefault()
+    document.dispatchEvent(
+      new CustomEvent('single:reply', { detail: { id: comment.id } }),
+    )
+  }
 
   return (
     <div
@@ -42,7 +50,7 @@ export function CommentItem({
           {new Date(comment.created).toLocaleString('zh-CN')}
         </time>
         <span className="comment-reply">
-          <a href={`#respond`} data-reply-to={comment.id} title="回复">
+          <a href="#respond" data-reply-to={comment.id} title="回复" onClick={onReply}>
             <i className="fa fa-reply" />
           </a>
         </span>

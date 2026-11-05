@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { fetchAggregate, fetchPostDetail, fetchAdjacentPosts } from '@/lib/api'
+import { fetchAggregate, fetchPostDetail, fetchAdjacentPosts, fetchComments } from '@/lib/api'
 import { mergeThemeConfig, metaFlags, type SingleThemeConfig } from '@/lib/theme-config'
 import { renderMarkdown } from '@/lib/markdown'
 import { ArticleTree } from '@/components/content/ArticleTree'
 import { LikeButton } from '@/components/post/LikeButton'
+import { ReadAck } from '@/components/post/ReadAck'
 import { CommentSection } from '@/components/comment/CommentSection'
 
 /**
@@ -43,6 +44,8 @@ export default async function PostPage({
     post.created,
     post.categorySlug,
   )
+
+  const comments = await fetchComments(post.id, 1, 10)
 
   return (
     <main>
@@ -135,11 +138,21 @@ export default async function PostPage({
           </section>
         )}
 
+        {/* 阅读数上报（M8）：首屏触发一次 */}
+        <ReadAck postId={post.id} />
+
         {/* 点赞按钮（M8） */}
         <LikeButton postId={post.id} initialLikes={post.count?.like ?? 0} />
 
-        {/* 评论区（S4） */}
-        <CommentSection postId={post.id} allowComment={post.allowComment} />
+        {/* 评论区（S4）：SSR 预取第 1 页注水给客户端组件 */}
+        <CommentSection
+          postId={post.id}
+          allowComment={post.allowComment}
+          initialItems={comments.items}
+          initialTotal={comments.pagination?.total ?? comments.items.length}
+          initialPage={comments.pagination?.page ?? 1}
+          initialTotalPages={comments.pagination?.totalPages ?? 1}
+        />
       </div>
     </main>
   )
