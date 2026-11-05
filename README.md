@@ -14,3 +14,5 @@
 [文档](./docs/)
 
 感谢保罗 @Dreamer-Paul 的 single，本项目将遵守 MIT 协议开源。
+
+加载动画额外实现来自 miuix-vue

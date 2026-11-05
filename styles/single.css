@@ -842,6 +842,48 @@ footer .to-top:before, footer .toggle-list:before{
     text-align: center;
     font-family: "FontAwesome";
 }
+
+/* 路由加载转圈（miuix-vue m-progress 风格） */
+footer .route-loader{
+    margin-top: .5em;
+    padding: .5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5em;
+    background-color: #fff;
+    background-color: var(--light-background);
+    border-radius: .25em;
+    border-radius: var(--radius);
+    border: 1px solid #ddd;
+    border-color: var(--border);
+    animation: route-loader-in .3s;
+}
+@keyframes route-loader-in{
+    from{ opacity: 0; transform: translateY(.5em); }
+    to{ opacity: 1; transform: translateY(0); }
+}
+footer .route-loader .m-progress--circular .m-progress__circ-bg{
+    stroke: var(--border);
+}
+footer .route-loader .m-progress--circular .m-progress__circ-fg{
+    stroke: var(--primary);
+    transform-origin: center;
+    transform-box: view-box;
+    animation:
+        m-progress-circ-rotate 1000ms linear infinite,
+        m-progress-circ-sweep 1600ms linear infinite;
+}
+/* 移植自 miuix-vue ProgressIndicator.vue (Apache-2.0) */
+@keyframes m-progress-circ-rotate{
+    from{ transform: rotate(0deg); }
+    to{ transform: rotate(360deg); }
+}
+@keyframes m-progress-circ-sweep{
+    0%{ stroke-dasharray: 30 330; }
+    50%{ stroke-dasharray: 120 240; }
+    100%{ stroke-dasharray: 30 330; }
+}
 footer .toggle-list{
     display: none;
     margin-top: .5em;

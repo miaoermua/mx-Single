@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { AggregateData, PostSummary, RecentComment } from '@/lib/api'
 import { fetchRecentPosts, fetchRecentComments } from '@/lib/api'
 import type { SingleThemeConfig } from '@/lib/theme-config'
+import { RouteLoader } from './RouteLoader'
 
 /**
  * 页脚（footer.php → Footer）
@@ -36,6 +37,7 @@ export async function Footer({
       {/* 返回顶部按钮；SingleRuntime 绑定 .to-top.active（滚动过半屏出现） */}
       <div className="buttons">
         <button className="to-top" />
+        <RouteLoader />
       </div>
       <div className="wrap min">
         {widgetSet && (
