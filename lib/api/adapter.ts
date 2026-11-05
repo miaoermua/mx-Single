@@ -226,18 +226,19 @@ export interface Comment {
 
 export function adaptComment(raw: AnyObj): Comment {
   const p = camelKeys<AnyObj>(raw)
-  const childrenRaw = p.children as AnyObj[] | undefined
+  // core v12.x：内容在 text 字段，子评论在 replies，父级在 parent_comment_id
+  const childrenRaw = (p.replies ?? p.children) as AnyObj[] | undefined
   return {
     id: String(p.id ?? p._id ?? ''),
     author: String(p.author ?? ''),
     avatar: p.avatar as string | undefined,
-    content: String(p.content ?? ''),
+    content: String(p.content ?? p.text ?? ''),
     created: String(p.createdAt ?? p.created ?? ''),
     url: p.url as string | undefined,
     mailHash: p.mailHash as string | undefined,
     isWhispers: p.isWhispers as boolean | undefined,
     pin: p.pin as boolean | undefined,
-    parent: p.parent as string | undefined,
+    parent: (p.parentCommentId ?? p.parent) as string | undefined,
     children: childrenRaw?.map(adaptComment),
   }
 }

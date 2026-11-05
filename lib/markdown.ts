@@ -10,6 +10,7 @@
  */
 
 import { marked } from 'marked'
+import { extractFootnoteCards, type LinkCardRef } from './link-cards'
 
 marked.setOptions({
   breaks: false,
@@ -107,4 +108,46 @@ export function extractHeadings(text: string): TocHeading[] {
 export function firstLevel(headings: TocHeading[]): number {
   if (!headings.length) return 1
   return Math.min(...headings.map((h) => h.level))
+}
+
+/* ---------- 链接卡片分段渲染 —— 【额外实现，非 Single 标准】 ---------- */
+
+export type MarkdownSegment =
+  | { type: 'html'; html: string }
+  | { type: 'card'; ref: string }
+
+export interface MarkdownSegmentsResult {
+  segments: MarkdownSegment[]
+  cards: LinkCardRef[]
+}
+
+/**
+ * 渲染含链接卡片脚注的 Markdown，切成「HTML 片段 / 卡片」分段数组。
+ *
+ * kami 扩展能力移植（语法见 lib/link-cards.ts）：[^N]: URL 定义 + 正文 [^N] 引用。
+ * 实现：extractFootnoteCards 把引用替换为占位注释（独占段落，marked 按 html block
+ * 原样透传），渲染后按注释 split 成段。无卡片时单段 html，输出与 renderMarkdown 一致。
+ *
+ * 与 renderMarkdown 的差异仅在分段；TOC（extractHeadings）仍用原文提取，不受影响。
+ */
+export function renderMarkdownSegments(text: string): MarkdownSegmentsResult {
+  const { body, cards } = extractFootnoteCards(text)
+  const html = renderMarkdown(body)
+  if (!cards.length) {
+    return { segments: [{ type: 'html', html }], cards }
+  }
+
+  const parts = html.split(/<!--linkcard:([\w-]+)-->/)
+  const segments: MarkdownSegment[] = []
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 0) {
+      if (parts[i]) segments.push({ type: 'html', html: parts[i] })
+    } else {
+      segments.push({ type: 'card', ref: parts[i] })
+    }
+  }
+  if (!segments.length) {
+    segments.push({ type: 'html', html })
+  }
+  return { segments, cards }
 }

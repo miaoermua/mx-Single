@@ -1,10 +1,13 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import '@/styles/link-card.css' // 额外实现（LinkCard 卡片样式，非 Single 标准），不修改全局 kico/single.css
 import { fetchAggregate, fetchPostDetail, fetchAdjacentPosts, fetchComments } from '@/lib/api'
 import { mergeThemeConfig, metaFlags, type SingleThemeConfig } from '@/lib/theme-config'
-import { renderMarkdown } from '@/lib/markdown'
+import { renderMarkdownSegments } from '@/lib/markdown'
+import { resolveLinkCards } from '@/lib/link-cards'
 import { ArticleTree } from '@/components/content/ArticleTree'
+import { LinkCard } from '@/components/content/LinkCard'
 import { LikeButton } from '@/components/post/LikeButton'
 import { ReadAck } from '@/components/post/ReadAck'
 import { CommentSection } from '@/components/comment/CommentSection'
@@ -34,7 +37,9 @@ export default async function PostPage({
   )
   const meta = metaFlags(theme.post_meta)
 
-  const html = renderMarkdown(post.text)
+  // 链接卡片（额外实现，非 Single 标准）：脚注解析 + SSR 并发预取，失败降级为朴素链接卡
+  const { segments, cards } = renderMarkdownSegments(post.text)
+  const cardData = cards.length > 0 ? await resolveLinkCards(cards) : new Map<string, null>()
   const modified = post.modified ? new Date(post.modified) : null
   const showStaleWarning =
     modified && Date.now() - modified.getTime() >= 15552000000
@@ -77,8 +82,24 @@ export default async function PostPage({
               天前，可能其部分内容已经发生变化，如有疑问可询问作者。
             </blockquote>
           )}
-          <div dangerouslySetInnerHTML={{ __html: html }} />
-        </article>
+        {/* 正文：分段渲染。无卡片脚注时等价原单段 HTML；卡片为 kami 扩展能力（额外实现，非 Single 标准） */}
+        {segments.map((seg, i) => {
+          if (seg.type === 'html') {
+            return <div key={i} dangerouslySetInnerHTML={{ __html: seg.html }} />
+          }
+          const card = cards.find((c) => c.ref === seg.ref)
+          if (!card) return null
+          return (
+            <LinkCard
+              key={`card-${seg.ref}`}
+              id={card.id}
+              source={card.source}
+              url={card.url}
+              data={cardData.get(seg.ref) ?? null}
+            />
+          )
+        })}
+      </article>
 
         {/* 目录树（single.js:48-106） */}
         <ArticleTree markdownText={post.text} />
