@@ -68,6 +68,7 @@ npm run build      # 生产构建
 
 - App Router 切换路由不会重新执行脚本，所以所有绑定必须**以 `usePathname()` 为依赖**，effect 内成对清理监听器（风险 R3）。
 - 新增全局副作用时，把清理函数写完整，避免切页后重复绑定。
+- **客户端组件禁止 import `lib/markdown.ts`**：它会带出 `marked` → `link-cards` → `link-preview` 整条链。需要 TOC 相关函数时从 `lib/toc.ts` 引入（该文件零依赖）。否则 `node:` 内建模块会进浏览器 bundle，Vercel 构建报 `UnhandledSchemeError`。
 
 ## 7. 评论模块要点
 

@@ -8,8 +8,6 @@
  * 原 Single（Typecho 主题）没有此能力，正文内链接就是普通 <a>。
  */
 
-import { isIP } from 'node:net'
-
 const BLOCKED_HOSTNAMES = new Set(['localhost', '0.0.0.0', '::1'])
 const PRIVATE_IPV4_RANGES = [
   /^10\./,
@@ -71,8 +69,38 @@ const parseTitle = (html: string) => {
   return match?.[1] ? decodeHtmlEntities(stripTags(match[1])) : undefined
 }
 
+/**
+ * 本地 IP 判定，替代 node:net 的 isIP。
+ *
+ * 不用 node:net 是因为本模块会被 lib/markdown.ts 间接引入，
+ * 一旦有客户端组件 import 到 markdown，webpack 就会因 `node:` 协议报错
+ * （Vercel 构建失败的根因）。这里的判定只服务 SSRF 防护，够用。
+ *
+ * 返回 0（非 IP）/ 4（IPv4）/ 6（IPv6），与 node:net 的 isIP 对齐。
+ */
+const isIP = (value: string): 0 | 4 | 6 => {
+  const v4 = value.split('.')
+  if (
+    v4.length === 4 &&
+    v4.every(
+      (part) =>
+        /^\d{1,3}$/.test(part) &&
+        // 拒绝前导零，避免 01.2.3.4 这类歧义写法绕过网段判断
+        !(part.length > 1 && part.startsWith('0')) &&
+        Number(part) <= 255,
+    )
+  ) {
+    return 4
+  }
+  // IPv6：含冒号且仅由十六进制字符、冒号、点组成（覆盖 ::1、::ffff:1.2.3.4）
+  if (value.includes(':') && /^[0-9a-f:.]+$/i.test(value)) {
+    return 6
+  }
+  return 0
+}
+
 const isPrivateIpv4 = (ip: string) => {
-  if (!isIP(ip)) {
+  if (isIP(ip) !== 4) {
     return false
   }
   return PRIVATE_IPV4_RANGES.some((pattern) => pattern.test(ip))
