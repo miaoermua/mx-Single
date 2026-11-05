@@ -42,7 +42,46 @@ npm run lint       # ESLint
 
 ## 4. 部署
 
-任意支持 Node 的平台（Vercel / 自建服务器均可）：
+### 4.1 Vercel
+
+1. 把仓库推到 GitHub / GitLab / Bitbucket。
+2. Vercel 控制台 **Add New → Project**，导入该仓库。
+3. Framework Preset 会自动识别为 **Next.js**，其余保持默认：
+   - Root Directory：仓库根
+   - Build Command：`npm run build`
+   - Output Directory：`.next`
+   - Install Command：`npm ci`（有 `package-lock.json` 时自动）
+4. 在 **Environment Variables** 中添加（Production、Preview 两个环境都要加）：
+
+   | Key | Value |
+   | --- | --- |
+   | `MX_CORE_URL` | `https://api.example.com`（**不要**带 `/api/v2`） |
+   | `MX_API_PREFIX` | `/api/v2`（可省略，默认值相同） |
+   | `MX_SSR_UA` | `mx-space-single-frontend/0.1.0`（可省略，默认值相同） |
+
+5. 点 **Deploy**。
+6. 部署完成后在 **Settings → Domains** 绑定自定义域名。
+
+部署后验证：
+
+```bash
+curl -I https://your-domain.com/            # 200，且 HTML 里是真实文章而非 mock
+curl -I https://your-domain.com/feed        # 200，反代到 core 的 RSS
+curl -I https://your-domain.com/sitemap.xml # 200
+```
+
+**注意事项**
+
+- `next.config.js` 的 `rewrites()` 在**构建时**读取 `MX_CORE_URL`，所以改动这个变量后必须 **Redeploy**，仅保存环境变量不会生效。
+- Preview 部署同样会请求真实 core，评论提交会写入生产数据；不想污染就单独配一套 Preview 变量。
+- **不要**设置 `DOCKER_BUILD`。它会把 `output` 切成 `standalone`，那是给 Docker 用的，Vercel 不需要。
+- Node 版本用 Vercel 默认的 20.x 即可（Next 14 要求 ≥ 18.17）。
+- 函数默认区域是 `iad1`（美东），回源国内 core 延迟较高。可在 **Settings → Functions → Region** 改到香港/新加坡（部分区域需 Pro），或给 core 套 CDN。
+- 如果 core 前面有 Cloudflare 的 Bot Fight Mode / 防火墙，Vercel 的出口 IP 可能被拦，需要放行或关闭该功能。
+- Hobby 计划函数超时 10 秒，core 响应过慢会出现 504。
+- 本站图片用原生 `<img>`，不走 `next/image`，不消耗 Vercel 图片优化额度。
+
+### 4.2 自建服务器 / Docker
 
 ```bash
 npm ci
@@ -50,7 +89,9 @@ npm run build
 npm run start    # 默认 3000 端口，可用 PORT 覆盖
 ```
 
-记得在生产环境注入上面的环境变量。
+构建 Docker 镜像时设置 `DOCKER_BUILD=1` 以启用 `standalone` 输出。
+
+无论哪种方式，都要记得注入第 2 节的环境变量。
 
 ## 5. 主题配置
 
