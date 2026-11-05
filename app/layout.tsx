@@ -77,10 +77,12 @@ export default async function RootLayout({
         />
         {/* 背景图：SSR 只输出 URL，不发起图片请求（第 10.2 节） */}
         {wallpaperUrl && (
-          <style>{`body:before{content:'';background-image:url(${wallpaperUrl})}`}</style>
+          <style dangerouslySetInnerHTML={{ __html: `body:before{content:'';background-image:url(${wallpaperUrl})}` }} />
         )}
         {/* custom_css：顺序在 single.css 之后（V9） */}
-        {theme.custom_css && <style>{theme.custom_css}</style>}
+        {theme.custom_css && (
+          <style dangerouslySetInnerHTML={{ __html: theme.custom_css }} />
+        )}
       </head>
       <body className={bodyClass}>
         <Header aggregate={agg} theme={theme} />

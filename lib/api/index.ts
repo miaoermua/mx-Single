@@ -54,6 +54,8 @@ async function get<T>(path: string): Promise<T> {
     cache: 'no-store',
   })
   if (!res.ok) {
+    // 4xx 返回 null，由调用方走兜底而非抛 500
+    if (res.status >= 400 && res.status < 500) return null as T
     throw new Error(`API ${path} returned ${res.status}`)
   }
   return res.json() as Promise<T>
@@ -216,7 +218,7 @@ export async function fetchRecently(size = 10): Promise<Recently[]> {
 
 /* ---------- 时间轴 Timeline（M2/M5） ---------- */
 
-export async function fetchTimeline(type = 'post'): Promise<TimelineItem[]> {
+export async function fetchTimeline(_type = 'post'): Promise<TimelineItem[]> {
   if (!hasCore()) {
     return mockPosts.map((p) => ({
       id: p.id,
@@ -227,8 +229,13 @@ export async function fetchTimeline(type = 'post'): Promise<TimelineItem[]> {
       type: 'post',
     }))
   }
-  const raw = await get<unknown>(`/aggregate/timeline?type=${type}`)
-  return unwrap<Record<string, unknown>[]>(raw).map(adaptTimeline)
+  // core v12.x：GET /aggregate/timeline 返回 { data: { posts: [...] } }
+  // 不接受 type 参数（422）
+  const raw = await get<unknown>('/aggregate/timeline')
+  if (!raw) return []
+  const data = (raw as Record<string, unknown>)?.data as Record<string, unknown> | undefined
+  const posts = (data?.posts as Record<string, unknown>[]) || []
+  return posts.map(adaptTimeline)
 }
 
 /* ---------- 搜索（S5） ---------- */
@@ -269,7 +276,9 @@ export async function fetchAdjacentPosts(
     ? `/categories/${categorySlug}/posts?size=50`
     : `/posts?size=50`
   const raw = await get<unknown>(path)
-  const items = unwrap<Record<string, unknown>[]>(raw).map(adaptPost)
+  if (!raw) return { prev: null, next: null }
+  const unwrapped = unwrap<Record<string, unknown>[]>(raw)
+  const items = (Array.isArray(unwrapped) ? unwrapped : []).map(adaptPost)
   const sorted = items.sort(
     (a, b) => new Date(a.created).getTime() - new Date(b.created).getTime(),
   )
@@ -304,9 +313,14 @@ export async function fetchRecentComments(): Promise<RecentComment[]> {
       content: c.content,
     }))
   }
-  // /activity/recent 只返回 3 条评论（R8），接受
+  // /activity/recent 可能返回 { data: { comments: [...] } } 或其他结构
   const raw = await get<unknown>('/activity/recent')
-  const arr = unwrap<Record<string, unknown>[]>(raw)
+  const unwrapped = unwrap<Record<string, unknown> | Record<string, unknown>[]>(raw)
+  const arr: Record<string, unknown>[] = Array.isArray(unwrapped)
+    ? unwrapped
+    : Array.isArray((unwrapped as Record<string, unknown>)?.comments)
+      ? ((unwrapped as Record<string, unknown>).comments as Record<string, unknown>[])
+      : []
   return arr.map((c) => {
     const p = camelKeys<Record<string, unknown>>(c)
     return {

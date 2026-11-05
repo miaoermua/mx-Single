@@ -92,13 +92,25 @@ export async function Footer({
             © {new Date().getFullYear()}{' '}
             <Link href={siteUrl}>{siteName}</Link>. All Rights Reserved. Theme By{' '}
             <a
-              href="https://github.com/Dreamer-Paul/Single"
+              href="https://github.com/miaoermua/mx-Single"
               target="_blank"
               rel="nofollow"
             >
               Single
             </a>
             .
+            {theme.beian && (
+              <>
+                {' '}
+                <a
+                  href="https://beian.miit.gov.cn"
+                  target="_blank"
+                  rel="nofollow"
+                >
+                  {theme.beian}
+                </a>
+              </>
+            )}
           </p>
         </section>
       </div>
@@ -111,6 +123,7 @@ function groupByMonth(posts: PostSummary[]): Array<{ key: string; label: string 
   const map = new Map<string, string>()
   for (const p of posts) {
     const d = new Date(p.created)
+    if (isNaN(d.getTime())) continue
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     const label = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月`
     if (!map.has(key)) map.set(key, label)

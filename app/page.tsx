@@ -9,18 +9,42 @@ import { mergeThemeConfig, metaFlags, type SingleThemeConfig } from '@/lib/theme
  * main > .wrap.min > section.home-title > h1 + span + .home-social；
  * section.home-posts > .post-item*（h2>a、p、.post-meta > time.date / span.category / span.tags / span.comments）；
  * section.page-navigator > span
+ *
+ * 分页：GET /?page=N，SSR 渲染 div.page-navigator > span（current 高亮）
  */
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: { page?: string }
+}) {
   const agg = await fetchAggregate()
   const theme = mergeThemeConfig(
     agg.theme as Partial<SingleThemeConfig> | undefined,
   )
-  const { items: posts } = await fetchPosts(1, 10)
+  const page = Math.max(1, Number(searchParams.page || '1'))
+  const { items: posts, pagination } = await fetchPosts(page, 10)
   const meta = metaFlags(theme.archive_meta)
 
   const social = theme.home_social || []
   const siteName = agg.seo?.title || agg.user?.name || 'Single'
   const siteDesc = agg.seo?.description || agg.user?.description || ''
+
+  const totalPages = pagination?.totalPages ?? 1
+  const currentPage = pagination?.page ?? page
+
+  // 生成分页页码列表（首页、末页、当前页前后 2 页，用 null 表示省略号）
+  const pageNumbers: (number | null)[] = []
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pageNumbers.push(i)
+  } else {
+    pageNumbers.push(1)
+    const start = Math.max(2, currentPage - 1)
+    const end = Math.min(totalPages - 1, currentPage + 1)
+    if (start > 2) pageNumbers.push(null)
+    for (let i = start; i <= end; i++) pageNumbers.push(i)
+    if (end < totalPages - 1) pageNumbers.push(null)
+    pageNumbers.push(totalPages)
+  }
 
   return (
     <main>
@@ -35,7 +59,7 @@ export default async function HomePage() {
                   {s.svg ? (
                     <span dangerouslySetInnerHTML={{ __html: s.svg }} />
                   ) : (
-                    <i className={`fa fa-${s.icon || 'link'}`} />
+                    <i className={`fa ${s.icon?.startsWith('fa-') ? s.icon : `fa-${s.icon || 'link'}`}`} />
                   )}
                 </a>
               ))}
@@ -73,6 +97,32 @@ export default async function HomePage() {
             </div>
           ))}
         </section>
+
+        {totalPages > 1 && (
+          <section className="page-navigator">
+            {currentPage > 1 && (
+              <span>
+                <Link href={currentPage === 2 ? '/' : `/?page=${currentPage - 1}`}>
+                  «
+                </Link>
+              </span>
+            )}
+            {pageNumbers.map((n, i) =>
+              n === null ? (
+                <span key={`gap-${i}`}>…</span>
+              ) : (
+                <span key={n} className={n === currentPage ? 'current' : ''}>
+                  <Link href={n === 1 ? '/' : `/?page=${n}`}>{n}</Link>
+                </span>
+              ),
+            )}
+            {currentPage < totalPages && (
+              <span>
+                <Link href={`/?page=${currentPage + 1}`}>»</Link>
+              </span>
+            )}
+          </section>
+        )}
       </div>
     </main>
   )

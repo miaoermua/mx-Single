@@ -3,23 +3,29 @@
 # 用途：mx 后台 → 其他 · 配置与云函数 → 新建
 #   名字: single | 引用: theme | 数据类型: YAML | 公开: 是
 # 验证：GET /api/v2/aggregate?theme=single → 响应 .theme 即本文件解析结果
+#       或 GET /api/v2/snippets/theme/single（layout 会两路合并）
 #
 # 原则：字段名、取值、默认语义全部沿用 Single 原配置（radio '0'/'1'/'2'、
 # checkbox show_*、「不填则不输出/不填则用默认」），不引入 kami 的 site.* 结构。
 # 仅末尾 wallpaper、nav_extra 两项是 mx 新增（FRONTEND_PLAN.md 5.3 / 10.2）。
+#
+# ⚠️ archive_meta / post_meta 必须是「对象列表」（每项一个 show_* 开关），
+#    不是裸字符串列表——前端 metaFlags() 按对象布尔值读取（lib/theme-config.ts）。
 
 name: single
 
-# 1 站点图标（functions.php:11）—— png 地址 192×192，不填则使用默认图标
+# 1 站点图标（functions.php:11）—— 不填则使用默认 /img/icon.png
+#    注：当前 layout 的 generateMetadata 已硬编码 /img/icon.png，
+#    此项预留给后续改为读 theme.favicon 时使用。
 favicon:
 
 # 2 站点背景（functions.php:15）—— 一张图片地址，不填则显示纯色背景。
-#    填壁纸 API 即随机背景（线上 paugram 同款用法）。
+#    填壁纸 API 即随机背景（线上 paugram 同款用法，source=gt 已实测可用）。
 background: https://api.paugram.com/wallpaper?source=gt
 
 # 3 自定义社交链接（functions.php:19）—— 不填则不输出。
 #    原为手写 HTML（进首页 .home-social）；mx 版结构化，组件输出同款 DOM：
-#    <a href="url"><i class="fa fa-{icon}"></i></a>；svg 有值时优先输出内联 SVG。
+#    <a href="url"><i class="fa fa-{icon}"></i></a>；svg 有值则优先输出内联 SVG。
 home_social:
   - title: GitHub
     url: https://github.com/Dreamer-Paul
@@ -27,43 +33,47 @@ home_social:
   - title: Bilibili
     url: https://space.bilibili.com/
     icon: fa-tv
-    svg: ''
+  - title: 邮件
+    url: mailto:i@example.com
+    icon: fa-envelope
 
 # 4 自定义样式表（functions.php:23）—— 不填则不输出，顺序在 single.css 之后。
+#    下面两行是线上 paugram 同款叠加样式，用于对齐视觉（正片叠底 + 夜间降透明）。
 custom_css: |-
   body::before{mix-blend-mode:multiply}
   .dark-theme::before{opacity:.4}
 
-# 5 统计代码（functions.php:27）—— 不填则不输出，需要 <script> 标签，原样输出
+# 5 统计代码（functions.php:27）—— 不填则不输出，需要 <script> 标签，原样输出。
 custom_script: ''
 
-# 6 作者信息（functions.php:31）—— 显示在文章底部 .author-info，不填则不输出
+# 6 作者信息（functions.php:31）—— 显示在文章底部 .author-info，不填则不输出。
 author_text: ''
 
-# 7 夜间模式（functions.php:35）—— '0' 关闭 | '1' 开启（22:00-5:00 自动）| '2' 始终
+# 7 夜间模式（functions.php:35）—— '0' 关闭 | '1' 开启（22:00-5:00 自动）| '2' 始终。
 night_mode: '0'
 
-# 8 复制提示（functions.php:45）—— '0' 关闭 | '1' 开启（访客复制内容时弹窗）
+# 8 复制提示（functions.php:45）—— '0' 关闭 | '1' 开启（访客复制内容时弹窗）。
 copy_notice: '1'
 
-# 9 信息栏（functions.php:54）—— '0' 关闭 | '1' 开启（页尾"最新文章/最近评论/时光机"三栏）
+# 9 信息栏（functions.php:54）—— '0' 关闭 | '1' 开启（页尾"最新文章/最近评论/时光机"三栏）。
 widget_set: '1'
 
-# 10 首页、存档页属性显示（functions.php:63）—— 多选
-#     show_category 文章分类 | show_tags 文章标签 | show_comments 评论数
+# 10 首页、存档页属性显示（functions.php:63）—— 多选，每项独立开关。
+#     可用键：show_category 文章分类 | show_tags 文章标签 | show_comments 评论数
 archive_meta:
-  - show_category
-  - show_comments
+  - show_category: true
+  - show_comments: true
 
-# 11 文章页属性显示（functions.php:73）—— 多选，原配置无 show_tags
-#     show_category 文章分类 | show_comments 评论数
+# 11 文章页属性显示（functions.php:73）—— 多选，原配置无 show_tags。
+#     可用键：show_category 文章分类 | show_comments 评论数
 post_meta:
-  - show_category
-  - show_comments
+  - show_category: true
+  - show_comments: true
 
 # ---- 以下为 mx 新增（原 PHP 无对应项）----
 
-# 随机背景增强（FRONTEND_PLAN 10.2）—— background 填壁纸 API 时的健壮化配置
+# 随机背景增强（FRONTEND_PLAN 10.2）—— background 填壁纸 API 时的健壮化配置。
+#    api 加载失败自动回退 cdn（jsDelivr 直取 Anime-Wallpaper）。
 wallpaper:
   enabled: true
   source: api              # api = paugram API | cdn = 仓库直取 | static = 固定图
@@ -80,3 +90,7 @@ nav_extra:
   says: true               # 说说
   timeline: true           # 时间轴
   friends: true            # 友链
+
+# ICP 备案号（显示在页脚 Single 右边），不填则不输出
+# 填写示例：鄂ICP备12345678号-1
+beian:

@@ -50,6 +50,8 @@ export interface SingleThemeConfig {
   post_meta?: ArchiveMetaFlag[]
   wallpaper?: WallpaperConfig
   nav_extra?: NavExtra
+  /** ICP 备案号（显示在页脚 Single 右边），不填则不输出 */
+  beian?: string
 }
 
 /** 默认值（与 docs/config.test.yaml 对齐） */

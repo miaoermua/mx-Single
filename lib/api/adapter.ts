@@ -46,6 +46,26 @@ export function unwrap<T>(raw: unknown): T {
   return raw as T
 }
 
+/** 从 Markdown 正文提取摘要（core 的 summary 字段常为空） */
+function extractSummary(text?: string): string | undefined {
+  if (!text) return undefined
+  return text
+    // 去掉 HTML 标签
+    .replace(/<[^>]+>/g, '')
+    // 去掉 Markdown 图片/链接语法
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    // 去掉 Markdown 标题/引用/代码标记
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^>\s+/gm, '')
+    .replace(/`{1,3}/g, '')
+    // 去掉多余空白
+    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 100)
+}
+
 /* ---------- 分页 ---------- */
 
 export interface Pagination {
@@ -60,14 +80,17 @@ export interface Pagination {
 export function parsePagination(raw: AnyObj): Pagination | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const p = camelKeys<AnyObj>(raw)
-  if (typeof p.page !== 'number') return undefined
+  // 后端字段：current_page / total_page / has_next_page / has_prev_page
+  // camelKeys 转成 currentPage / totalPage / hasNextPage / hasPrevPage
+  const page = Number(p.currentPage ?? p.page)
+  if (isNaN(page)) return undefined
   return {
-    page: Number(p.page),
+    page,
     size: Number(p.size),
     total: Number(p.total),
-    totalPages: Number(p.totalPages),
-    hasPrev: !!p.hasPrev,
-    hasNext: !!p.hasNext,
+    totalPages: Number(p.totalPage ?? p.totalPages),
+    hasPrev: !!(p.hasPrevPage ?? p.hasPrev),
+    hasNext: !!(p.hasNextPage ?? p.hasNext),
   }
 }
 
@@ -116,8 +139,8 @@ export function adaptPost(raw: AnyObj): PostSummary {
     category: (p.category as AnyObj)?.name as string | undefined,
     categorySlug: (p.category as AnyObj)?.slug as string | undefined,
     tags: p.tags as string[] | undefined,
-    summary: p.summary as string | undefined,
-    created: String(p.created ?? ''),
+    summary: (p.summary as string | undefined) || extractSummary(p.text as string | undefined),
+    created: String(p.createdAt ?? p.created ?? ''),
     modified: p.modified as string | undefined,
     count: count
       ? {
@@ -126,8 +149,18 @@ export function adaptPost(raw: AnyObj): PostSummary {
           comments: count.comments as number | undefined,
         }
       : undefined,
-    cover: p.cover as string | undefined,
-    images: p.images as string[] | undefined,
+    // cover 可能是字符串或 { src, ... } 对象
+    cover: typeof p.cover === 'string'
+      ? p.cover
+      : (p.cover as AnyObj)?.src as string | undefined,
+    // images 元素可能是 { src, type, ... } 对象或字符串
+    images: Array.isArray(p.images)
+      ? p.images
+          .map((img: unknown) =>
+            typeof img === 'string' ? img : (img as AnyObj)?.src,
+          )
+          .filter((s: unknown): s is string => typeof s === 'string')
+      : undefined,
   }
 }
 
@@ -151,7 +184,7 @@ export function adaptPage(raw: AnyObj): PageDetail {
     title: String(p.title ?? ''),
     slug: String(p.slug ?? ''),
     text: String(p.text ?? ''),
-    created: String(p.created ?? ''),
+    created: String(p.createdAt ?? p.created ?? ''),
     modified: p.modified as string | undefined,
     allowComment: p.allowComment as boolean | undefined,
   }
@@ -200,7 +233,7 @@ export function adaptComment(raw: AnyObj): Comment {
     author: String(p.author ?? ''),
     avatar: p.avatar as string | undefined,
     content: String(p.content ?? ''),
-    created: String(p.created ?? ''),
+    created: String(p.createdAt ?? p.created ?? ''),
     url: p.url as string | undefined,
     mailHash: p.mailHash as string | undefined,
     isWhispers: p.isWhispers as boolean | undefined,
@@ -212,26 +245,39 @@ export function adaptComment(raw: AnyObj): Comment {
 
 /* ---------- 友链 ---------- */
 
+/** 友链状态：0=正常、2=失联、3=禁止（core v12.x） */
+export type FriendState = 0 | 2 | 3
+/** 友链类型：0=友链、1=收藏（core v12.x） */
+export type FriendType = 0 | 1
+
 export interface FriendLink {
   id: string
   name: string
   url: string
   avatar?: string
   description?: string
-  type?: string
-  state?: number
+  /** 0=友链、1=收藏 */
+  type: FriendType
+  /** 0=正常、2=失联、3=禁止 */
+  state: FriendState
+  /** 添加时间，用于排序 */
+  created?: string
 }
 
 export function adaptFriend(raw: AnyObj): FriendLink {
   const p = camelKeys<AnyObj>(raw)
+  const type = (Number(p.type) === 1 ? 1 : 0) as FriendType
+  const stateRaw = Number(p.state)
+  const state = (stateRaw === 2 ? 2 : stateRaw === 3 ? 3 : 0) as FriendState
   return {
     id: String(p.id ?? p._id ?? ''),
     name: String(p.name ?? ''),
     url: String(p.url ?? ''),
     avatar: p.avatar as string | undefined,
     description: p.description as string | undefined,
-    type: p.type as string | undefined,
-    state: p.state as number | undefined,
+    type,
+    state,
+    created: String(p.createdAt ?? p.created ?? ''),
   }
 }
 
@@ -257,7 +303,7 @@ export function adaptNote(raw: AnyObj): Note {
     nid: Number(p.nid ?? 0),
     title: p.title as string | undefined,
     content: String(p.content ?? ''),
-    created: String(p.created ?? ''),
+    created: String(p.createdAt ?? p.created ?? ''),
     mood: p.mood as string | undefined,
     weather: p.weather as string | undefined,
     bookmark: p.bookmark as Note['bookmark'],
@@ -279,7 +325,7 @@ export function adaptSay(raw: AnyObj): Say {
   return {
     id: String(p.id ?? p._id ?? ''),
     content: String(p.content ?? ''),
-    created: String(p.created ?? ''),
+    created: String(p.createdAt ?? p.created ?? ''),
   }
 }
 
@@ -296,7 +342,7 @@ export function adaptRecently(raw: AnyObj): Recently {
   return {
     id: String(p.id ?? p._id ?? ''),
     content: String(p.content ?? ''),
-    created: String(p.created ?? ''),
+    created: String(p.createdAt ?? p.created ?? ''),
   }
 }
 
@@ -318,7 +364,7 @@ export function adaptTimeline(raw: AnyObj): TimelineItem {
     title: String(p.title ?? ''),
     slug: String(p.slug ?? ''),
     category: (p.category as AnyObj)?.name as string | undefined,
-    created: String(p.created ?? ''),
+    created: String(p.createdAt ?? p.created ?? ''),
     type: p.type as string | undefined,
   }
 }

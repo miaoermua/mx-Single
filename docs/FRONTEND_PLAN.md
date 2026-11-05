@@ -207,6 +207,7 @@ GET /api/v2/categories?type=tag     → 标签云（tags 页）
 | `post_meta` | 分类 + 评论数 | Snippet | 同上 |
 | **新增** `wallpaper` | — | Snippet | `{enabled, source, fallback, cdnList[]}`，见第 10 节 |
 | **新增** `nav_extra` | — | Snippet | 归档 / 日记 / 说说等 mx 新页面的菜单开关 |
+| **新增** `beian` | 空 | Snippet | ICP 备案号（额外实现），见 `docs/EXTRA_FEATURES.md` |
 
 ---
 
@@ -406,3 +407,74 @@ text (markdown)
 2. 次要待办：实测 `aggregate?theme=single` 的 Snippet 权限（需跑着的 core 实例，可在 S2 阶段做）。
 
 > 说明：`core`、`docs`、`my-kami` 三个仓库在本次工作中**全程只读**；本次仅写入 `Single/docs/COMPATIBILITY.md` 与 `Single/docs/FRONTEND_PLAN.md`，未改动任何仓库源码，也未执行 git 提交。
+
+---
+
+## 15. 额外实现（原版 Single 无）
+
+以下功能为 mx 适配版新增，原版 Typecho 主题没有对应实现，记录于此以便后续维护。
+
+### 15.1 ICP 备案号
+
+**背景**：原版 Single 面向个人博客，页脚只有 `© Year SiteName. All Rights Reserved. Theme By Single.`，无备案字段。mx 适配版后端常部署在国内，需展示 ICP 备案号以符合合规要求。
+
+**配置**：Snippet（`ref=theme`、`name=single`）新增字段 `beian`，字符串类型，默认空（不输出）。
+
+```yaml
+# docs/config.test.yaml
+beian: 鄂ICP备12345678号-1
+```
+
+**落点**：`components/layout/Footer.tsx`，页脚 `.sub-footer > p` 内，"Theme By Single." 右侧。
+
+**DOM 输出**：
+```html
+<a href="https://beian.miit.gov.cn" target="_blank" rel="nofollow">鄂ICP备12345678号-1</a>
+```
+
+**不填则不输出**，不影响原版视觉。
+
+**代码位置**：
+- 类型定义：`lib/theme-config.ts` → `SingleThemeConfig.beian`
+- 渲染逻辑：`components/layout/Footer.tsx` → `.sub-footer`
+- 配置示例：`docs/config.test.yaml` → `beian`
+
+### 15.2 友链页 + 自助申请
+
+**背景**：原版 Single 没有独立的友链页模板（`legacy/` 里无 `links.php`/`friends.php`）。原版做法是在 Typecho 后台「独立页面」编辑器里手写 `<a class="link-friend">` HTML，主题只提供 `.link-friend` 的 CSS 样式和 `single.js:109` 的 `links()`（给外链加 `target="_blank"`），没有结构化数据源。
+
+mx 适配版改为读 core 的友链数据，并提供自助申请入口。
+
+**数据源**：`GET /links/all`（公开），返回友链数组，适配为 `{id, name, url, avatar, description, type, state}`。按 `type` 分组渲染。
+
+**路由**：`app/friends/page.tsx`，复用 `.page-title` + `.page-content.is-special` 版式。
+
+**DOM 契约**：
+```html
+<section class="page-title"><h2>朋友们</h2></section>
+<article class="page-content is-special">
+  <div><h1>{分组名}</h1>
+    <div class="row">
+      <div class="col-6 col-m-4">
+        <a class="link-friend" href="{url}" target="_blank" rel="nofollow">
+          <img src="{avatar}" alt="{name}" />
+          <h4>{name}</h4>
+          <p>{description}</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</article>
+```
+
+**自助申请表单**（`ApplyForm`）：替代原版评论区留言申请友链的方式，改用 mx 原生的友链审核接口。
+
+- 表单字段：站点名称 `name`、地址 `url`、头像 `avatar`、描述 `description`、分组 `type`
+- 提交走 `POST /api/friends/audit`（同源代理 route），转发到 core `POST /links/audit`
+- 提交后提示「申请已提交，等待博主审核」
+
+**代码位置**：
+- 友链页：`app/friends/page.tsx`
+- 申请表单：`components/friends/ApplyForm.tsx`
+- 审核代理 route：`app/api/friends/audit/route.ts`
+- 数据适配：`lib/api/adapter.ts` → `adaptFriend`、`lib/api/index.ts` → `fetchFriends`
